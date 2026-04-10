@@ -1,9 +1,20 @@
 <turbo-frame id="ca-trends">
-    <h2>Tendances</h2>
-    <div class="ca-chart"
+  <div class="chart-area">
+    <div class="chart-header">
+      <div>
+        <div class="chart-headline">Traffic Report</div>
+        <div class="chart-deck">Daily page views and unique visitors</div>
+      </div>
+      <div class="chart-legend-ed">
+        <span><span class="led-line" style="background:var(--ink);"></span> Page views</span>
+        <span><span class="led-line dashed"></span> Visitors</span>
+      </div>
+    </div>
+    <div class="chart-box"
          data-controller="chart"
          data-chart-dates-value="{{ dates }}"
          data-chart-views-value="{{ views }}"
          data-chart-visitors-value="{{ visitors }}">
     </div>
+  </div>
 </turbo-frame>
