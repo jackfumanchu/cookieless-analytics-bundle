@@ -122,16 +122,18 @@ class PageViewRepository extends ServiceEntityRepository
         $conn = $this->getEntityManager()->getConnection();
 
         $sql = <<<'SQL'
-            SELECT
-                CASE
-                    WHEN referrer IS NULL OR referrer = '' THEN 'Direct'
-                    ELSE SUBSTRING(referrer FROM '://([^/]+)')
-                END AS source,
-                COUNT(*) AS visits
-            FROM ca_page_view
-            WHERE viewed_at >= :from AND viewed_at <= :to AND page_url = :pageUrl
-            GROUP BY source
-            ORDER BY visits DESC
+            SELECT source, visits FROM (
+                SELECT
+                    CASE
+                        WHEN referrer IS NULL OR referrer = '' THEN 'Direct'
+                        ELSE SUBSTRING(referrer FROM '://([^/]+)')
+                    END AS source,
+                    COUNT(*) AS visits
+                FROM ca_page_view
+                WHERE viewed_at >= :from AND viewed_at <= :to AND page_url = :pageUrl
+                GROUP BY source
+            ) sub
+            ORDER BY visits DESC, source = 'Direct' ASC, source ASC
             LIMIT :limit
         SQL;
 
