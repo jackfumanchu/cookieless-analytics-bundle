@@ -48,6 +48,30 @@ class AnalyticsEventRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function countDistinctTypes(\DateTimeImmutable $from, \DateTimeImmutable $to): int
+    {
+        return (int) $this->createQueryBuilder('e')
+            ->select('COUNT(DISTINCT e.name)')
+            ->where('e.recordedAt >= :from')
+            ->andWhere('e.recordedAt <= :to')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countUniqueActors(\DateTimeImmutable $from, \DateTimeImmutable $to): int
+    {
+        return (int) $this->createQueryBuilder('e')
+            ->select('COUNT(DISTINCT e.fingerprint)')
+            ->where('e.recordedAt >= :from')
+            ->andWhere('e.recordedAt <= :to')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     /**
      * @return list<array{date: string, count: int}>
      */

@@ -43,6 +43,32 @@ class AnalyticsEventRepositoryTest extends KernelTestCase
         $this->em->flush();
     }
 
+    private function createEventWithFingerprint(string $name, string $fingerprint, string $date, ?string $value = null, string $pageUrl = '/home'): void
+    {
+        $event = AnalyticsEvent::create(
+            fingerprint: $fingerprint,
+            name: $name,
+            value: $value,
+            pageUrl: $pageUrl,
+            recordedAt: new \DateTimeImmutable($date),
+        );
+        $this->em->persist($event);
+        $this->em->flush();
+    }
+
+    private function createEventOnPage(string $name, string $pageUrl, string $date, ?string $value = null): void
+    {
+        $event = AnalyticsEvent::create(
+            fingerprint: str_repeat('a', 64),
+            name: $name,
+            value: $value,
+            pageUrl: $pageUrl,
+            recordedAt: new \DateTimeImmutable($date),
+        );
+        $this->em->persist($event);
+        $this->em->flush();
+    }
+
     #[Test]
     public function count_by_period_returns_total_events(): void
     {
@@ -75,6 +101,36 @@ class AnalyticsEventRepositoryTest extends KernelTestCase
         self::assertSame(2, (int) $result[0]['distinctValues']);
         self::assertSame('signup', $result[1]['name']);
         self::assertSame(1, (int) $result[1]['occurrences']);
+    }
+
+    #[Test]
+    public function count_distinct_types_returns_unique_event_names(): void
+    {
+        $this->createEvent('click-cta', '2026-04-05');
+        $this->createEvent('click-cta', '2026-04-06');
+        $this->createEvent('signup', '2026-04-06');
+        $this->createEvent('download', '2026-04-07');
+
+        $from = new \DateTimeImmutable('2026-04-05 00:00:00');
+        $to = new \DateTimeImmutable('2026-04-07 23:59:59');
+
+        self::assertSame(3, $this->repository->countDistinctTypes($from, $to));
+    }
+
+    #[Test]
+    public function count_unique_actors_returns_distinct_fingerprints(): void
+    {
+        $fp1 = str_repeat('a', 64);
+        $fp2 = str_repeat('b', 64);
+
+        $this->createEventWithFingerprint('click-cta', $fp1, '2026-04-05');
+        $this->createEventWithFingerprint('signup', $fp1, '2026-04-06');
+        $this->createEventWithFingerprint('click-cta', $fp2, '2026-04-06');
+
+        $from = new \DateTimeImmutable('2026-04-05 00:00:00');
+        $to = new \DateTimeImmutable('2026-04-07 23:59:59');
+
+        self::assertSame(2, $this->repository->countUniqueActors($from, $to));
     }
 
     #[Test]
