@@ -3,11 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics</title>
-    {% block stylesheets %}{% endblock %}
+    <title>{% block title %}The Analytics Record{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@300;400;500;600;700;800;900&family=IBM+Plex+Mono:wght@300;400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+    {% block stylesheets %}
+    <style>{{ source('@CookielessAnalytics/dashboard/dashboard.css', ignore_missing=true) }}</style>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--paper);
+            color: var(--ink);
+            font-family: var(--body);
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.4;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+            background-size: 200px;
+            z-index: 999;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uplot@1/dist/uPlot.min.css">
+    {% endblock %}
 </head>
 <body>
     {% block body %}{% endblock %}
-    {% block javascripts %}{% endblock %}
+    {% block javascripts %}
+    <script type="importmap">
+    {
+        "imports": {
+            "@hotwired/turbo": "https://cdn.jsdelivr.net/npm/@hotwired/turbo@8/dist/turbo.es2017-esm.min.js",
+            "@hotwired/stimulus": "https://cdn.jsdelivr.net/npm/@hotwired/stimulus@3/dist/stimulus.js",
+            "uplot": "https://cdn.jsdelivr.net/npm/uplot@1/dist/uPlot.esm.js"
+        }
+    }
+    </script>
+    <script type="module">
+    import "@hotwired/turbo";
+    import { Application, Controller } from "@hotwired/stimulus";
+
+    const app = Application.start();
+
+    // Date Range Controller
+    app.register("date-range", class extends Controller {
+        static targets = ["shortcut", "fromInput", "toInput"];
+        static values = { from: String, to: String };
+
+        connect() { this.highlightActiveShortcut(); }
+
+        apply() {
+            const from = this.fromInputTarget.value;
+            const to = this.toInputTarget.value;
+            if (!from || !to || from > to) return;
+            this.updateFrames(from, to);
+        }
+
+        shortcutTargetConnected(element) {
+            element.addEventListener("click", () => {
+                const { from, to } = this.computePeriod(element.dataset.period);
+                this.fromInputTarget.value = from;
+                this.toInputTarget.value = to;
+                this.updateFrames(from, to);
+            });
+        }
+
+        computePeriod(period) {
+            const today = new Date();
+            const to = this.formatDate(today);
+            let from;
+            switch (period) {
+                case "today": from = to; break;
+                case "7days": from = this.formatDate(new Date(today.getTime() - 6 * 86400000)); break;
+                case "30days": from = this.formatDate(new Date(today.getTime() - 29 * 86400000)); break;
+                case "month": from = this.formatDate(new Date(today.getFullYear(), today.getMonth(), 1)); break;
+                default: from = this.formatDate(new Date(today.getTime() - 29 * 86400000));
+            }
+            return { from, to };
+        }
+
+        updateFrames(from, to) {
+            const url = new URL(window.location);
+            url.searchParams.set("from", from);
+            url.searchParams.set("to", to);
+            window.history.replaceState({}, "", url);
+            document.querySelectorAll('turbo-frame[id^="ca-"]').forEach(frame => {
+                const src = new URL(frame.src || frame.getAttribute("src"), window.location.origin);
+                src.searchParams.set("from", from);
+                src.searchParams.set("to", to);
+                frame.src = src.toString();
+            });
+            this.fromValue = from;
+            this.toValue = to;
+            this.highlightActiveShortcut();
+        }
+
+        highlightActiveShortcut() {
+            const from = this.fromInputTarget.value;
+            const to = this.toInputTarget.value;
+            this.shortcutTargets.forEach(btn => {
+                const { from: pFrom, to: pTo } = this.computePeriod(btn.dataset.period);
+                btn.classList.toggle("active", pFrom === from && pTo === to);
+            });
+        }
+
+        formatDate(date) { return date.toISOString().slice(0, 10); }
+    });
+
+    // Chart Controller (uPlot)
+    import uPlot from "uplot";
+    app.register("chart", class extends Controller {
+        static values = { dates: Array, views: Array, visitors: Array };
+
+        connect() { this.renderChart(); }
+        disconnect() { if (this.chart) this.chart.destroy(); }
+
+        renderChart() {
+            const timestamps = this.datesValue.map(d => new Date(d + "T00:00:00").getTime() / 1000);
+            const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+            const inkMuted = getComputedStyle(document.documentElement).getPropertyValue('--ink-muted').trim();
+            const paper = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim();
+            const rule = getComputedStyle(document.documentElement).getPropertyValue('--rule').trim();
+            const opts = {
+                width: this.element.clientWidth,
+                height: 200,
+                series: [
+                    { label: "Date" },
+                    {
+                        label: "Page views",
+                        stroke: ink,
+                        width: 2,
+                        fill: "rgba(26,23,18,0.06)",
+                        points: { show: true, size: 7, stroke: ink, fill: paper }
+                    },
+                    {
+                        label: "Visitors",
+                        stroke: inkMuted,
+                        width: 1.5,
+                        dash: [5, 4],
+                        points: { show: false }
+                    },
+                ],
+                axes: [
+                    {
+                        values: (u, vals) => vals.map(v => {
+                            const d = new Date(v * 1000);
+                            const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+                            return months[d.getMonth()] + " " + d.getDate();
+                        }),
+                        font: "9px 'IBM Plex Mono', monospace",
+                        stroke: inkMuted,
+                    },
+                    {
+                        font: "9px 'IBM Plex Mono', monospace",
+                        stroke: inkMuted,
+                        grid: { stroke: rule, width: 0.5 },
+                    },
+                ],
+            };
+            this.chart = new uPlot(opts, [timestamps, this.viewsValue, this.visitorsValue], this.element);
+        }
+    });
+    </script>
+    {% endblock %}
 </body>
 </html>
