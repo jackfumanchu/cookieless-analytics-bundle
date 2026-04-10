@@ -169,4 +169,14 @@ class PageViewRepository extends ServiceEntityRepository
             'pageUrl' => $pageUrl,
         ])->fetchAllAssociative();
     }
+
+    public function findEarliestViewedAt(): ?\DateTimeImmutable
+    {
+        $result = $this->createQueryBuilder('p')
+            ->select('MIN(p.viewedAt)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $result !== null ? new \DateTimeImmutable($result) : null;
+    }
 }

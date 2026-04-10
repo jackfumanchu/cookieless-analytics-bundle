@@ -9,6 +9,7 @@ use Jackfumanchu\CookielessAnalyticsBundle\Repository\PageViewRepository;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\DateRangeResolver;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\PeriodComparison;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\PeriodComparer;
+use Composer\InstalledVersions;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -42,10 +43,16 @@ class DashboardController
             is_string($to) ? $to : null,
         );
 
+        $version = InstalledVersions::getVersion('jackfumanchu/cookieless-analytics-bundle') ?? '0.0.0';
+        $earliest = $this->pageViewRepo->findEarliestViewedAt();
+        $daysActive = $earliest !== null ? (int) $earliest->diff(new \DateTimeImmutable('today'))->days + 1 : 0;
+
         $html = $this->twig->render('@CookielessAnalytics/dashboard/index.html.twig', [
             'from' => $dateRange->from->format('Y-m-d'),
             'to' => $dateRange->to->format('Y-m-d'),
             'layout' => $this->dashboardLayout ?? '@CookielessAnalytics/dashboard/layout.html.twig',
+            'bundleVersion' => $version,
+            'daysActive' => $daysActive,
         ]);
 
         return new Response($html);

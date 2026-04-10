@@ -5,8 +5,9 @@
 
   {# ─── Masthead ─── #}
   <header class="masthead">
+    {% set vParts = bundleVersion|split('.') %}
     <div class="masthead-above">
-      <span>Cookieless Analytics Bundle</span>
+      <span>Vol. {{ vParts[0]|default(0) }}, Ch. {{ vParts[1]|default(0) }}, p. {{ vParts[2]|default(0) }} &middot; No. {{ daysActive }}</span>
       <span>{{ "now"|date("l, F j, Y") }}</span>
       <span>Cookie-Free Since 2024</span>
     </div>
