@@ -1,0 +1,25 @@
+<turbo-frame id="ca-events">
+    <h2>Événements</h2>
+    <table class="ca-table">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Occurrences</th>
+                <th>Valeurs distinctes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in events %}
+            <tr>
+                <td>{{ event.name }}</td>
+                <td>{{ event.occurrences }}</td>
+                <td>{{ event.distinctValues }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3">Aucune donnée pour cette période</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</turbo-frame>

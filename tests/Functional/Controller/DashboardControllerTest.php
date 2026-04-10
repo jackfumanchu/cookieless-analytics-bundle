@@ -86,6 +86,37 @@ class DashboardControllerTest extends WebTestCase
     }
 
     #[Test]
+    public function events_returns_table(): void
+    {
+        $client = static::createClient();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $em->persist(AnalyticsEvent::create(
+            fingerprint: str_repeat('a', 64),
+            name: 'click-cta',
+            value: 'hero-button',
+            pageUrl: '/home',
+            recordedAt: new \DateTimeImmutable('today'),
+        ));
+        $em->persist(AnalyticsEvent::create(
+            fingerprint: str_repeat('a', 64),
+            name: 'click-cta',
+            value: 'footer-button',
+            pageUrl: '/home',
+            recordedAt: new \DateTimeImmutable('today'),
+        ));
+        $em->flush();
+
+        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $client->request('GET', '/analytics/events?from=' . $today . '&to=' . $today);
+
+        self::assertResponseStatusCodeSame(200);
+        $content = $client->getResponse()->getContent();
+        self::assertStringContainsString('click-cta', $content);
+        self::assertStringContainsString('ca-events', $content);
+    }
+
+    #[Test]
     public function overview_returns_kpi_cards(): void
     {
         $client = static::createClient();

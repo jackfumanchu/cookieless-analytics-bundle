@@ -111,7 +111,20 @@ class DashboardController
     #[Route(path: '/events', name: 'cookieless_analytics_dashboard_events', methods: ['GET'])]
     public function events(Request $request): Response
     {
-        return new Response('<turbo-frame id="ca-events"><p>Coming soon</p></turbo-frame>');
+        $this->denyAccessUnlessGranted();
+
+        $dateRange = $this->dateRangeResolver->resolve(
+            $request->query->getString('from') ?: null,
+            $request->query->getString('to') ?: null,
+        );
+
+        $events = $this->eventRepo->findTopEvents($dateRange->from, $dateRange->to, 10);
+
+        $html = $this->twig->render('@CookielessAnalytics/dashboard/_events.html.twig', [
+            'events' => $events,
+        ]);
+
+        return new Response($html);
     }
 
     private function denyAccessUnlessGranted(): void
