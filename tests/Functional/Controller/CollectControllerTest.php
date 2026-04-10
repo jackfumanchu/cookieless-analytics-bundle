@@ -153,4 +153,23 @@ class CollectControllerTest extends WebTestCase
 
         self::assertSame('/page?category=music', $pageViews[0]->getPageUrl());
     }
+
+    #[Test]
+    public function collect_with_excluded_path_returns_204_without_persisting(): void
+    {
+        $client = static::createClient();
+
+        $client->request('POST', '/ca/collect', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode([
+            'url' => '/admin/dashboard',
+        ]));
+
+        self::assertResponseStatusCodeSame(204);
+
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $pageViews = $em->getRepository(PageView::class)->findAll();
+
+        self::assertCount(0, $pageViews);
+    }
 }

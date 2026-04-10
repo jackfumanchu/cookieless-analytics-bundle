@@ -158,4 +158,24 @@ class EventControllerTest extends WebTestCase
 
         self::assertSame('/page?category=music', $events[0]->getPageUrl());
     }
+
+    #[Test]
+    public function event_with_excluded_page_url_returns_204_without_persisting(): void
+    {
+        $client = static::createClient();
+
+        $client->request('POST', '/ca/event', [], [], [
+            'CONTENT_TYPE' => 'application/json',
+        ], json_encode([
+            'name' => 'admin-click',
+            'pageUrl' => '/admin/settings',
+        ]));
+
+        self::assertResponseStatusCodeSame(204);
+
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $events = $em->getRepository(AnalyticsEvent::class)->findAll();
+
+        self::assertCount(0, $events);
+    }
 }

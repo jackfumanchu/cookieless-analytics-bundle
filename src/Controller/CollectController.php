@@ -7,6 +7,7 @@ namespace Jackfumanchu\CookielessAnalyticsBundle\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use Jackfumanchu\CookielessAnalyticsBundle\Entity\PageView;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\FingerprintGenerator;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\PathExcluder;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\UrlSanitizer;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,6 +18,7 @@ class CollectController
     public function __construct(
         private readonly FingerprintGenerator $fingerprintGenerator,
         private readonly UrlSanitizer $urlSanitizer,
+        private readonly PathExcluder $pathExcluder,
         private readonly EntityManagerInterface $entityManager,
     ) {
     }
@@ -31,6 +33,10 @@ class CollectController
         }
 
         $url = $this->urlSanitizer->sanitize($body['url']);
+
+        if ($this->pathExcluder->isExcluded($url)) {
+            return new Response(null, Response::HTTP_NO_CONTENT);
+        }
 
         $referrer = null;
         if (!empty($body['referrer']) && is_string($body['referrer'])) {

@@ -7,6 +7,7 @@ namespace Jackfumanchu\CookielessAnalyticsBundle\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use Jackfumanchu\CookielessAnalyticsBundle\Entity\AnalyticsEvent;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\FingerprintGenerator;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\PathExcluder;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\UrlSanitizer;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,6 +18,7 @@ class EventController
     public function __construct(
         private readonly FingerprintGenerator $fingerprintGenerator,
         private readonly UrlSanitizer $urlSanitizer,
+        private readonly PathExcluder $pathExcluder,
         private readonly EntityManagerInterface $entityManager,
     ) {
     }
@@ -39,6 +41,10 @@ class EventController
         }
 
         $pageUrl = $this->urlSanitizer->sanitize($body['pageUrl']);
+
+        if ($this->pathExcluder->isExcluded($pageUrl)) {
+            return new Response(null, Response::HTTP_NO_CONTENT);
+        }
 
         $value = null;
         if (!empty($body['value']) && is_string($body['value'])) {

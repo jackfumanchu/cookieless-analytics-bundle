@@ -6,3 +6,6 @@ cookieless_analytics:
         - key
         - secret
         - email
+    exclude_paths:
+        - '^/admin'
+        - '^/_'

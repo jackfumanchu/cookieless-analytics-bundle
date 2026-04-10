@@ -7,6 +7,7 @@ namespace Jackfumanchu\CookielessAnalyticsBundle;
 use Jackfumanchu\CookielessAnalyticsBundle\Controller\CollectController;
 use Jackfumanchu\CookielessAnalyticsBundle\Controller\EventController;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\FingerprintGenerator;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\PathExcluder;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\UrlSanitizer;
 use Jackfumanchu\CookielessAnalyticsBundle\Twig\CookielessAnalyticsExtension;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
@@ -30,10 +31,14 @@ class CookielessAnalyticsBundle extends AbstractBundle
             ->scalarPrototype()->end()
             ->defaultValue(['token', 'password', 'key', 'secret', 'email'])
             ->end()
+            ->arrayNode('exclude_paths')
+            ->scalarPrototype()->end()
+            ->defaultValue([])
+            ->end()
             ->end();
     }
 
-    /** @param array{collect_prefix: string, strip_query_params: list<string>} $config */
+    /** @param array{collect_prefix: string, strip_query_params: list<string>, exclude_paths: list<string>} $config */
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
         $builder->setParameter('cookieless_analytics.collect_prefix', $config['collect_prefix']);
@@ -47,6 +52,9 @@ class CookielessAnalyticsBundle extends AbstractBundle
 
         $services->set(UrlSanitizer::class)
             ->arg('$stripParams', $config['strip_query_params']);
+
+        $services->set(PathExcluder::class)
+            ->arg('$patterns', $config['exclude_paths']);
 
         $services->set(CollectController::class);
 
