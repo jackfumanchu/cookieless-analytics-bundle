@@ -110,7 +110,7 @@ cookieless_analytics:
     dashboard_prefix: '/analytics'
 
     # Role required to access the dashboard
-    dashboard_role: 'ROLE_ADMIN'
+    dashboard_role: 'ROLE_ANALYTICS'
 
     # Number of days to retain raw page view records (0 = keep forever)
     retention_days: 365
@@ -126,7 +126,23 @@ Once installed and configured, visit:
 https://your-site.com/analytics
 ```
 
-Access is restricted to users with the configured role (default: `ROLE_ADMIN`).
+Access is restricted to users with the configured role (default: `ROLE_ANALYTICS`). Assign this role to users who should see analytics, or use Symfony's role hierarchy to link it to `ROLE_ADMIN`.
+
+### Dashboard setup
+
+For interactive features (date range selector, lazy-loading widgets, charts), install the optional dependencies:
+
+```bash
+composer require symfony/ux-turbo
+php bin/console importmap:require uplot
+```
+
+To use your own layout (with your app's navbar, footer, etc.), set `dashboard_layout` to your base template:
+
+```yaml
+cookieless_analytics:
+    dashboard_layout: 'base.html.twig'
+```
 
 ### What the dashboard shows
 
@@ -134,9 +150,8 @@ Access is restricted to users with the configured role (default: `ROLE_ADMIN`).
 |---|---|
 | **Overview** | Total page views and unique visitors for the selected period |
 | **Top pages** | Most visited URLs with unique visitor counts |
-| **Navigation paths** | Most common page sequences (A → B → C) |
-| **Events** | Custom events ranked by count, with value breakdown |
-| **Trends** | Daily/weekly chart for the selected date range |
+| **Events** | Custom events ranked by count, with distinct value counts |
+| **Trends** | Daily page view and unique visitor chart for the selected period |
 
 ---
 
