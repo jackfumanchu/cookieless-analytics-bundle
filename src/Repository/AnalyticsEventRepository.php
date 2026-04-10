@@ -118,6 +118,26 @@ class AnalyticsEventRepository extends ServiceEntityRepository
     }
 
     /**
+     * @return list<array{pageUrl: string, count: int}>
+     */
+    public function findTopPagesForEvent(string $name, \DateTimeImmutable $from, \DateTimeImmutable $to, int $limit = 10): array
+    {
+        return $this->createQueryBuilder('e')
+            ->select('e.pageUrl, COUNT(e.id) AS count')
+            ->where('e.recordedAt >= :from')
+            ->andWhere('e.recordedAt <= :to')
+            ->andWhere('e.name = :name')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->setParameter('name', $name)
+            ->groupBy('e.pageUrl')
+            ->orderBy('count', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @return list<array{date: string, count: int}>
      */
     public function countByDay(\DateTimeImmutable $from, \DateTimeImmutable $to): array

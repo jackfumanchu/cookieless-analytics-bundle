@@ -174,6 +174,26 @@ class AnalyticsEventRepositoryTest extends KernelTestCase
     }
 
     #[Test]
+    public function find_top_pages_for_event_groups_by_page(): void
+    {
+        $this->createEventOnPage('click-cta', '/home', '2026-04-05');
+        $this->createEventOnPage('click-cta', '/home', '2026-04-06');
+        $this->createEventOnPage('click-cta', '/pricing', '2026-04-06');
+        $this->createEventOnPage('signup', '/home', '2026-04-06');
+
+        $from = new \DateTimeImmutable('2026-04-05 00:00:00');
+        $to = new \DateTimeImmutable('2026-04-07 23:59:59');
+
+        $result = $this->repository->findTopPagesForEvent('click-cta', $from, $to, 10);
+
+        self::assertCount(2, $result);
+        self::assertSame('/home', $result[0]['pageUrl']);
+        self::assertSame(2, (int) $result[0]['count']);
+        self::assertSame('/pricing', $result[1]['pageUrl']);
+        self::assertSame(1, (int) $result[1]['count']);
+    }
+
+    #[Test]
     public function count_by_day_returns_daily_breakdown(): void
     {
         $this->createEvent('click-cta', '2026-04-05 10:00:00');
