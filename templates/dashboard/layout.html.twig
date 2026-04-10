@@ -54,13 +54,35 @@
         static targets = ["shortcut", "fromInput", "toInput"];
         static values = { from: String, to: String };
 
-        connect() { this.highlightActiveShortcut(); }
+        connect() {
+            this.highlightActiveShortcut();
+            this.normalizeDateInputs();
+        }
+
+        normalizeDateInputs() {
+            const from = this.normalizeDate(this.fromInputTarget.value);
+            const to = this.normalizeDate(this.toInputTarget.value);
+            if (from && from !== this.fromInputTarget.value) this.fromInputTarget.value = from;
+            if (to && to !== this.toInputTarget.value) this.toInputTarget.value = to;
+        }
 
         apply() {
-            const from = this.fromInputTarget.value;
-            const to = this.toInputTarget.value;
+            const from = this.normalizeDate(this.fromInputTarget.value);
+            const to = this.normalizeDate(this.toInputTarget.value);
             if (!from || !to || from > to) return;
+            this.fromInputTarget.value = from;
+            this.toInputTarget.value = to;
             this.updateFrames(from, to);
+        }
+
+        normalizeDate(input) {
+            if (!input || !/^\d{4}-\d{2}-\d{2}$/.test(input)) return null;
+            const [y, m, d] = input.split("-").map(Number);
+            const date = new Date(y, m - 1, d);
+            if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
+                return this.formatDate(date);
+            }
+            return input;
         }
 
         shortcutTargetConnected(element) {
