@@ -97,6 +97,27 @@ class AnalyticsEventRepository extends ServiceEntityRepository
     }
 
     /**
+     * @return list<array{value: string, count: int}>
+     */
+    public function findValueBreakdown(string $name, \DateTimeImmutable $from, \DateTimeImmutable $to, int $limit = 10): array
+    {
+        return $this->createQueryBuilder('e')
+            ->select('e.value AS value, COUNT(e.id) AS count')
+            ->where('e.recordedAt >= :from')
+            ->andWhere('e.recordedAt <= :to')
+            ->andWhere('e.name = :name')
+            ->andWhere('e.value IS NOT NULL')
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+            ->setParameter('name', $name)
+            ->groupBy('e.value')
+            ->orderBy('count', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
      * @return list<array{date: string, count: int}>
      */
     public function countByDay(\DateTimeImmutable $from, \DateTimeImmutable $to): array

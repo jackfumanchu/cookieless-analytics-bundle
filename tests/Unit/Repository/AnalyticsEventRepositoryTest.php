@@ -154,6 +154,26 @@ class AnalyticsEventRepositoryTest extends KernelTestCase
     }
 
     #[Test]
+    public function find_value_breakdown_groups_by_value(): void
+    {
+        $this->createEvent('click-cta', '2026-04-05', 'hero-button');
+        $this->createEvent('click-cta', '2026-04-05', 'hero-button');
+        $this->createEvent('click-cta', '2026-04-06', 'footer-button');
+        $this->createEvent('signup', '2026-04-06', 'organic');
+
+        $from = new \DateTimeImmutable('2026-04-05 00:00:00');
+        $to = new \DateTimeImmutable('2026-04-07 23:59:59');
+
+        $result = $this->repository->findValueBreakdown('click-cta', $from, $to, 10);
+
+        self::assertCount(2, $result);
+        self::assertSame('hero-button', $result[0]['value']);
+        self::assertSame(2, (int) $result[0]['count']);
+        self::assertSame('footer-button', $result[1]['value']);
+        self::assertSame(1, (int) $result[1]['count']);
+    }
+
+    #[Test]
     public function count_by_day_returns_daily_breakdown(): void
     {
         $this->createEvent('click-cta', '2026-04-05 10:00:00');
