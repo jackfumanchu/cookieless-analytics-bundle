@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Jackfumanchu\CookielessAnalyticsBundle;
 
 use Jackfumanchu\CookielessAnalyticsBundle\Controller\CollectController;
+use Jackfumanchu\CookielessAnalyticsBundle\Controller\EventController;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\FingerprintGenerator;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\UrlSanitizer;
 use Jackfumanchu\CookielessAnalyticsBundle\Twig\CookielessAnalyticsExtension;
@@ -48,6 +49,8 @@ class CookielessAnalyticsBundle extends AbstractBundle
             ->arg('$stripParams', $config['strip_query_params']);
 
         $services->set(CollectController::class);
+
+        $services->set(EventController::class);
 
         $services->set(CookielessAnalyticsExtension::class)
             ->arg('$collectUrl', $config['collect_prefix']);
