@@ -9,6 +9,7 @@ use Jackfumanchu\CookielessAnalyticsBundle\Controller\EventController;
 use Jackfumanchu\CookielessAnalyticsBundle\Repository\AnalyticsEventRepository;
 use Jackfumanchu\CookielessAnalyticsBundle\Repository\PageViewRepository;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\FingerprintGenerator;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\DateRangeResolver;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\PathExcluder;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\UrlSanitizer;
 use Jackfumanchu\CookielessAnalyticsBundle\Twig\CookielessAnalyticsExtension;
@@ -37,13 +38,31 @@ class CookielessAnalyticsBundle extends AbstractBundle
             ->scalarPrototype()->end()
             ->defaultValue([])
             ->end()
+            ->booleanNode('dashboard_enabled')
+            ->defaultTrue()
+            ->end()
+            ->scalarNode('dashboard_prefix')
+            ->defaultValue('/analytics')
+            ->cannotBeEmpty()
+            ->end()
+            ->scalarNode('dashboard_role')
+            ->defaultValue('ROLE_ANALYTICS')
+            ->cannotBeEmpty()
+            ->end()
+            ->scalarNode('dashboard_layout')
+            ->defaultNull()
+            ->end()
             ->end();
     }
 
-    /** @param array{collect_prefix: string, strip_query_params: list<string>, exclude_paths: list<string>} $config */
+    /** @param array{collect_prefix: string, strip_query_params: list<string>, exclude_paths: list<string>, dashboard_enabled: bool, dashboard_prefix: string, dashboard_role: string, dashboard_layout: ?string} $config */
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
         $builder->setParameter('cookieless_analytics.collect_prefix', $config['collect_prefix']);
+        $builder->setParameter('cookieless_analytics.dashboard_enabled', $config['dashboard_enabled']);
+        $builder->setParameter('cookieless_analytics.dashboard_prefix', $config['dashboard_prefix']);
+        $builder->setParameter('cookieless_analytics.dashboard_role', $config['dashboard_role']);
+        $builder->setParameter('cookieless_analytics.dashboard_layout', $config['dashboard_layout']);
 
         $services = $container->services()
             ->defaults()
@@ -61,6 +80,8 @@ class CookielessAnalyticsBundle extends AbstractBundle
 
         $services->set(PathExcluder::class)
             ->arg('$patterns', $config['exclude_paths']);
+
+        $services->set(DateRangeResolver::class);
 
         $services->set(CollectController::class);
 

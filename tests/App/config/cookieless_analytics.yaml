@@ -9,3 +9,7 @@ cookieless_analytics:
     exclude_paths:
         - '^/admin'
         - '^/_'
+    dashboard_enabled: true
+    dashboard_prefix: '/analytics'
+    dashboard_role: 'ROLE_ANALYTICS'
+    dashboard_layout: ~
