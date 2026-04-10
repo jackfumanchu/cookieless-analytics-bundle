@@ -1,6 +1,6 @@
 # CookielessAnalytics
 
-A lightweight, self-hosted, **cookieless** analytics bundle for Symfony 6.4+.
+A lightweight, self-hosted, **cookieless** analytics bundle for Symfony 7.4+.
 
 No cookies. No consent banner. No external service. Full GDPR compliance out of the box.
 
@@ -26,7 +26,7 @@ anonymous fingerprint — no personal data is ever stored.
 ## Requirements
 
 - PHP 8.2+
-- Symfony 6.4 or 7.x
+- Symfony 7.4 or 8.x
 - Doctrine ORM 3.x
 - PostgreSQL 12.14+
 

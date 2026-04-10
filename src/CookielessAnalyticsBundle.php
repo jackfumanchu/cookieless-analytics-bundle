@@ -17,16 +17,18 @@ class CookielessAnalyticsBundle extends AbstractBundle
 {
     public function configure(DefinitionConfigurator $definition): void
     {
-        $definition->rootNode()
+        /** @var \Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition $rootNode */
+        $rootNode = $definition->rootNode();
+        $rootNode
             ->children()
-                ->scalarNode('collect_prefix')
-                    ->defaultValue('/ca')
-                    ->cannotBeEmpty()
-                ->end()
-                ->arrayNode('strip_query_params')
-                    ->scalarPrototype()->end()
-                    ->defaultValue(['token', 'password', 'key', 'secret', 'email'])
-                ->end()
+            ->scalarNode('collect_prefix')
+            ->defaultValue('/ca')
+            ->cannotBeEmpty()
+            ->end()
+            ->arrayNode('strip_query_params')
+            ->scalarPrototype()->end()
+            ->defaultValue(['token', 'password', 'key', 'secret', 'email'])
+            ->end()
             ->end();
     }
 
@@ -35,22 +37,19 @@ class CookielessAnalyticsBundle extends AbstractBundle
     {
         $builder->setParameter('cookieless_analytics.collect_prefix', $config['collect_prefix']);
 
-        $services = $container->services();
+        $services = $container->services()
+            ->defaults()
+            ->autowire()
+            ->autoconfigure();
 
-        $services->set(FingerprintGenerator::class)
-            ->autowire();
+        $services->set(FingerprintGenerator::class);
 
         $services->set(UrlSanitizer::class)
-            ->autowire()
             ->arg('$stripParams', $config['strip_query_params']);
 
-        $services->set(CollectController::class)
-            ->autowire()
-            ->tag('controller.service_arguments');
+        $services->set(CollectController::class);
 
         $services->set(CookielessAnalyticsExtension::class)
-            ->autowire()
-            ->arg('$collectUrl', $config['collect_prefix'])
-            ->tag('twig.extension');
+            ->arg('$collectUrl', $config['collect_prefix']);
     }
 }
