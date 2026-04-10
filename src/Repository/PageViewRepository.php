@@ -83,4 +83,88 @@ class PageViewRepository extends ServiceEntityRepository
             'to' => $to->format('Y-m-d H:i:s'),
         ])->fetchAllAssociative();
     }
+
+    /**
+     * @return list<array{source: string, visits: int}>
+     */
+    public function findTopReferrers(\DateTimeImmutable $from, \DateTimeImmutable $to, int $limit = 10): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = <<<'SQL'
+            SELECT source, visits FROM (
+                SELECT
+                    CASE
+                        WHEN referrer IS NULL OR referrer = '' THEN 'Direct'
+                        ELSE SUBSTRING(referrer FROM '://([^/]+)')
+                    END AS source,
+                    COUNT(*) AS visits
+                FROM ca_page_view
+                WHERE viewed_at >= :from AND viewed_at <= :to
+                GROUP BY source
+            ) sub
+            ORDER BY visits DESC, source = 'Direct' ASC, source ASC
+            LIMIT :limit
+        SQL;
+
+        return $conn->executeQuery($sql, [
+            'from' => $from->format('Y-m-d H:i:s'),
+            'to' => $to->format('Y-m-d H:i:s'),
+            'limit' => $limit,
+        ])->fetchAllAssociative();
+    }
+
+    /**
+     * @return list<array{source: string, visits: int}>
+     */
+    public function findTopReferrersForPage(string $pageUrl, \DateTimeImmutable $from, \DateTimeImmutable $to, int $limit = 10): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = <<<'SQL'
+            SELECT
+                CASE
+                    WHEN referrer IS NULL OR referrer = '' THEN 'Direct'
+                    ELSE SUBSTRING(referrer FROM '://([^/]+)')
+                END AS source,
+                COUNT(*) AS visits
+            FROM ca_page_view
+            WHERE viewed_at >= :from AND viewed_at <= :to AND page_url = :pageUrl
+            GROUP BY source
+            ORDER BY visits DESC
+            LIMIT :limit
+        SQL;
+
+        return $conn->executeQuery($sql, [
+            'from' => $from->format('Y-m-d H:i:s'),
+            'to' => $to->format('Y-m-d H:i:s'),
+            'pageUrl' => $pageUrl,
+            'limit' => $limit,
+        ])->fetchAllAssociative();
+    }
+
+    /**
+     * @return list<array{date: string, count: int, unique: int}>
+     */
+    public function countByDayForPage(string $pageUrl, \DateTimeImmutable $from, \DateTimeImmutable $to): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = <<<'SQL'
+            SELECT
+                TO_CHAR(viewed_at, 'YYYY-MM-DD') AS date,
+                COUNT(*) AS count,
+                COUNT(DISTINCT fingerprint) AS unique
+            FROM ca_page_view
+            WHERE viewed_at >= :from AND viewed_at <= :to AND page_url = :pageUrl
+            GROUP BY date
+            ORDER BY date ASC
+        SQL;
+
+        return $conn->executeQuery($sql, [
+            'from' => $from->format('Y-m-d H:i:s'),
+            'to' => $to->format('Y-m-d H:i:s'),
+            'pageUrl' => $pageUrl,
+        ])->fetchAllAssociative();
+    }
 }
