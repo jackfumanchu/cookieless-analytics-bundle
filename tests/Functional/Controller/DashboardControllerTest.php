@@ -34,6 +34,10 @@ class DashboardControllerTest extends WebTestCase
         self::assertSelectorExists('turbo-frame#ca-top-pages');
         self::assertSelectorExists('turbo-frame#ca-events');
         self::assertSelectorExists('turbo-frame#ca-trends');
+        self::assertSelectorExists('turbo-frame#ca-referrers');
+        self::assertSelectorExists('.masthead');
+        self::assertSelectorExists('.section-nav');
+        self::assertSelectorExists('.columns');
     }
 
     #[Test]
