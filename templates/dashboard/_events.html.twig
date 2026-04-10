@@ -1,25 +1,18 @@
 <turbo-frame id="ca-events">
-    <h2>Événements</h2>
-    <table class="ca-table">
-        <thead>
-            <tr>
-                <th>Nom</th>
-                <th>Occurrences</th>
-                <th>Valeurs distinctes</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for event in events %}
-            <tr>
-                <td>{{ event.name }}</td>
-                <td>{{ event.occurrences }}</td>
-                <td>{{ event.distinctValues }}</td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="3">Aucune donnée pour cette période</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+  <h2 class="section-head">Events Dispatch</h2>
+  <p class="section-deck">Custom events tracked across the site, ordered by frequency.</p>
+  <ul class="event-list">
+    {% set maxOccurrences = events|first.occurrences|default(1) %}
+    {% for event in events %}
+    <li class="event-item">
+      <span class="event-name"><span class="bullet"></span> {{ event.name }}</span>
+      <span class="event-bar-track"><span class="event-bar-fill" style="width:{{ (event.occurrences / maxOccurrences * 100)|round }}%;"></span></span>
+      <span class="event-count">{{ event.occurrences|number_format(0, '.', ',') }}</span>
+    </li>
+    {% else %}
+    <li class="event-item">
+      <span class="event-name" style="color:var(--ink-muted);">No data for this period</span>
+    </li>
+    {% endfor %}
+  </ul>
 </turbo-frame>
