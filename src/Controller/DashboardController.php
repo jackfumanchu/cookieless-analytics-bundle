@@ -235,7 +235,10 @@ class DashboardController
         $resolvedTo = $dateRange->to->format('Y-m-d');
 
         if ($inputFrom !== '' && $inputTo !== '' && ($inputFrom !== $resolvedFrom || $inputTo !== $resolvedTo)) {
-            $url = $request->getPathInfo() . '?' . http_build_query(['from' => $resolvedFrom, 'to' => $resolvedTo]);
+            $params = $request->query->all();
+            $params['from'] = $resolvedFrom;
+            $params['to'] = $resolvedTo;
+            $url = $request->getPathInfo() . '?' . http_build_query($params);
 
             return new RedirectResponse($url, 302);
         }

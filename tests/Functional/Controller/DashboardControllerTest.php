@@ -390,6 +390,19 @@ class DashboardControllerTest extends WebTestCase
     }
 
     #[Test]
+    public function pages_view_redirect_preserves_search_param(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/analytics/pages?from=2026-1-1&to=2026-1-31&search=blog');
+
+        self::assertResponseRedirects();
+        $location = $client->getResponse()->headers->get('Location');
+        self::assertStringContainsString('search=blog', $location);
+        self::assertStringContainsString('from=2026-01-01', $location);
+        self::assertStringContainsString('to=2026-01-31', $location);
+    }
+
+    #[Test]
     public function pages_view_with_search_shows_empty_detail_pane(): void
     {
         $client = static::createClient();
