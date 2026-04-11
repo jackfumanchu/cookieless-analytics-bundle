@@ -7,17 +7,27 @@
     <span class="page-count">{{ totalPages }} page{{ totalPages != 1 ? 's' : '' }} tracked</span>
   </div>
 
-  {# ─── Search (UI only) ─── #}
-  <div class="search-bar">
+  {# ─── Search ─── #}
+  <div class="search-bar"
+       data-controller="search"
+       data-search-url-value="{{ path('cookieless_analytics_dashboard_pages_view') }}"
+       data-search-from-value="{{ from }}"
+       data-search-to-value="{{ to }}">
     <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><line x1="10.2" y1="10.2" x2="14" y2="14"/></svg>
-    <input class="search-input" type="text" placeholder="Search pages by URL...">
-    <span class="search-hint">{{ totalPages }} results</span>
+    <input class="search-input"
+           type="text"
+           placeholder="Search pages by URL..."
+           value="{{ search }}"
+           data-search-target="input"
+           data-action="input->search#filter">
+    <span class="search-hint" data-search-target="hint">{{ totalPages }} results</span>
   </div>
 
   {# ─── Two-Pane Layout ─── #}
   <div class="page-layout">
 
-    {# ─── List Pane ─── #}
+    {# ─── List Pane (inside Turbo Frame for live search) ─── #}
+    <turbo-frame id="ca-pages-list">
     <div class="list-pane">
       {% if pages|length > 0 %}
       <table class="pages-table">
@@ -41,9 +51,10 @@
         </tbody>
       </table>
       {% else %}
-      <div class="ca-empty">No page data for this period</div>
+      <div class="ca-empty">{% if search %}No pages match your search{% else %}No page data for this period{% endif %}</div>
       {% endif %}
     </div>
+    </turbo-frame>
 
     <div class="pane-divider"></div>
 
