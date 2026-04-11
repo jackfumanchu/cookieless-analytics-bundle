@@ -77,7 +77,18 @@ class DashboardController
         }
 
         $searchTerm = is_string($search) && $search !== '' ? $search : null;
-        $pages = $this->pageViewRepo->findTopPages($dateRange->from, $dateRange->to, 50, $searchTerm);
+        $perPage = 20;
+
+        // Count total distinct pages (for pagination)
+        $totalDistinct = $this->pageViewRepo->countDistinctPages($dateRange->from, $dateRange->to, $searchTerm);
+        $totalPagesCount = max(1, (int) ceil($totalDistinct / $perPage));
+
+        // Read and clamp page number
+        $page = max(1, (int) $request->query->get('page', 1));
+        $page = min($page, $totalPagesCount);
+        $offset = ($page - 1) * $perPage;
+
+        $pages = $this->pageViewRepo->findTopPages($dateRange->from, $dateRange->to, $perPage, $searchTerm, $offset);
         $totalPages = count($pages);
 
         // Turbo Frame request — return only the list frame
@@ -85,6 +96,13 @@ class DashboardController
             $html = $this->twig->render('@CookielessAnalytics/dashboard/pages/_pages_list.html.twig', [
                 'pages' => $pages,
                 'totalPages' => $totalPages,
+                'currentPage' => $page,
+                'totalPagesCount' => $totalPagesCount,
+                'perPage' => $perPage,
+                'from' => $dateRange->from->format('Y-m-d'),
+                'to' => $dateRange->to->format('Y-m-d'),
+                'search' => $searchTerm ?? '',
+                'offset' => $offset,
             ]);
 
             return new Response($html);
@@ -123,6 +141,10 @@ class DashboardController
             'totalPages' => $totalPages,
             'selectedDetail' => $selectedDetail,
             'search' => $searchTerm ?? '',
+            'currentPage' => $page,
+            'totalPagesCount' => $totalPagesCount,
+            'perPage' => $perPage,
+            'offset' => $offset,
         ]);
 
         return new Response($html);

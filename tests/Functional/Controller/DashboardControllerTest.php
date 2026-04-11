@@ -451,4 +451,85 @@ class DashboardControllerTest extends WebTestCase
         self::assertStringContainsString('No page selected', $content);
         self::assertStringNotContainsString('class="detail-header"', $content);
     }
+
+    #[Test]
+    public function pages_view_page_2_shows_second_page_of_results(): void
+    {
+        $client = static::createClient();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        for ($i = 1; $i <= 25; $i++) {
+            $em->persist(PageView::create(
+                fingerprint: str_repeat('a', 64),
+                pageUrl: sprintf('/page-%03d', $i),
+                referrer: null,
+                viewedAt: new \DateTimeImmutable('today'),
+            ));
+        }
+        $em->flush();
+
+        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $client->request('GET', '/analytics/pages?from=' . $today . '&to=' . $today . '&page=2');
+
+        self::assertResponseStatusCodeSame(200);
+        $content = $client->getResponse()->getContent();
+        // Page 2 should have 5 results (25 total, 20 per page)
+        // Use '<tr' to match both '<tr>' and '<tr class="selected">'
+        self::assertSame(5, substr_count($content, '<tr') - 1);
+    }
+
+    #[Test]
+    public function pages_view_out_of_bounds_page_clamps_to_last(): void
+    {
+        $client = static::createClient();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $em->persist(PageView::create(
+            fingerprint: str_repeat('a', 64),
+            pageUrl: '/home',
+            referrer: null,
+            viewedAt: new \DateTimeImmutable('today'),
+        ));
+        $em->flush();
+
+        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $client->request('GET', '/analytics/pages?from=' . $today . '&to=' . $today . '&page=999');
+
+        self::assertResponseStatusCodeSame(200);
+        $content = $client->getResponse()->getContent();
+        self::assertStringContainsString('/home', $content);
+    }
+
+    #[Test]
+    public function pages_view_search_with_pagination(): void
+    {
+        $client = static::createClient();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        for ($i = 1; $i <= 25; $i++) {
+            $em->persist(PageView::create(
+                fingerprint: str_repeat('a', 64),
+                pageUrl: sprintf('/blog/post-%03d', $i),
+                referrer: null,
+                viewedAt: new \DateTimeImmutable('today'),
+            ));
+        }
+        for ($i = 1; $i <= 5; $i++) {
+            $em->persist(PageView::create(
+                fingerprint: str_repeat('a', 64),
+                pageUrl: sprintf('/about/team-%03d', $i),
+                referrer: null,
+                viewedAt: new \DateTimeImmutable('today'),
+            ));
+        }
+        $em->flush();
+
+        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $client->request('GET', '/analytics/pages?from=' . $today . '&to=' . $today . '&search=blog&page=2');
+
+        self::assertResponseStatusCodeSame(200);
+        $content = $client->getResponse()->getContent();
+        self::assertSame(5, substr_count($content, '<tr>') - 1);
+        self::assertStringNotContainsString('/about/team', $content);
+    }
 }
