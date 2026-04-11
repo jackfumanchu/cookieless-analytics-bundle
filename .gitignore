@@ -27,4 +27,12 @@ phpstan.neon
 ###> infection/infection ###
 /infection
 infection.json5
-###< infection
+###< infection ###
+
+###> superpowers ###
+/.superpowers
+###< superpowers ###
+
+###> reflexion with Claude ###
+docs/mockup
+###< reflexion ###
