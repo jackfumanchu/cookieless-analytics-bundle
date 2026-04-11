@@ -36,3 +36,7 @@ infection.json5
 ###> reflexion with Claude ###
 docs/mockup
 ###< reflexion ###
+
+###> Panther tests ###
+/drivers
+###< Panther tests ###
