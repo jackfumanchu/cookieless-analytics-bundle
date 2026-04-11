@@ -4,7 +4,7 @@
   {# ─── Controls Left ─── #}
   <div class="controls-left" style="margin-bottom: 20px;">
     <span class="page-headline">Pages</span>
-    <span class="page-count">{{ totalPages }} page{{ totalPages != 1 ? 's' : '' }} tracked</span>
+    <span class="page-count">{{ totalDistinct }} page{{ totalDistinct != 1 ? 's' : '' }} tracked</span>
   </div>
 
   {# ─── Search ─── #}
@@ -20,7 +20,7 @@
            value="{{ search }}"
            data-search-target="input"
            data-action="input->search#filter">
-    <span class="search-hint">{{ totalPages }} results</span>
+    <span class="search-hint">{{ totalDistinct }} results</span>
   </div>
 
   {# ─── Two-Pane Layout ─── #}

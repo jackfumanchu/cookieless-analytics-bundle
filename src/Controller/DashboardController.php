@@ -96,6 +96,7 @@ class DashboardController
             $html = $this->twig->render('@CookielessAnalytics/dashboard/pages/_pages_list.html.twig', [
                 'pages' => $pages,
                 'totalPages' => $totalPages,
+                'totalDistinct' => $totalDistinct,
                 'currentPage' => $page,
                 'totalPagesCount' => $totalPagesCount,
                 'perPage' => $perPage,
@@ -139,6 +140,7 @@ class DashboardController
             'active_nav' => 'pages',
             'pages' => $pages,
             'totalPages' => $totalPages,
+            'totalDistinct' => $totalDistinct,
             'selectedDetail' => $selectedDetail,
             'search' => $searchTerm ?? '',
             'currentPage' => $page,
