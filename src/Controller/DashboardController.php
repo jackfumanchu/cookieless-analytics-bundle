@@ -66,6 +66,7 @@ class DashboardController
 
         $from = $request->query->get('from');
         $to = $request->query->get('to');
+        $search = $request->query->get('search');
         $dateRange = $this->dateRangeResolver->resolve(
             is_string($from) ? $from : null,
             is_string($to) ? $to : null,
@@ -75,11 +76,12 @@ class DashboardController
             return $redirect;
         }
 
-        $pages = $this->pageViewRepo->findTopPages($dateRange->from, $dateRange->to, 50);
+        $searchTerm = is_string($search) && $search !== '' ? $search : null;
+        $pages = $this->pageViewRepo->findTopPages($dateRange->from, $dateRange->to, 50, $searchTerm);
         $totalPages = count($pages);
 
-        // Pre-select the first page for the detail pane
-        $selectedPage = $pages[0]['pageUrl'] ?? null;
+        // Pre-select the first page for the detail pane (only when not searching)
+        $selectedPage = $searchTerm === null ? ($pages[0]['pageUrl'] ?? null) : null;
         $selectedDetail = null;
         if ($selectedPage !== null) {
             $selectedViews = $this->periodComparer->compare(
@@ -110,6 +112,7 @@ class DashboardController
             'pages' => $pages,
             'totalPages' => $totalPages,
             'selectedDetail' => $selectedDetail,
+            'search' => $searchTerm ?? '',
         ]);
 
         return new Response($html);

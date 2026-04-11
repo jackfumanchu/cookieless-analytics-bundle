@@ -359,4 +359,56 @@ class DashboardControllerTest extends WebTestCase
 
         self::assertResponseStatusCodeSame(200);
     }
+
+    #[Test]
+    public function pages_view_with_search_filters_results(): void
+    {
+        $client = static::createClient();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $em->persist(PageView::create(
+            fingerprint: str_repeat('a', 64),
+            pageUrl: '/en/blog/hello',
+            referrer: null,
+            viewedAt: new \DateTimeImmutable('today'),
+        ));
+        $em->persist(PageView::create(
+            fingerprint: str_repeat('b', 64),
+            pageUrl: '/en/about',
+            referrer: null,
+            viewedAt: new \DateTimeImmutable('today'),
+        ));
+        $em->flush();
+
+        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $client->request('GET', '/analytics/pages?from=' . $today . '&to=' . $today . '&search=blog');
+
+        self::assertResponseStatusCodeSame(200);
+        $content = $client->getResponse()->getContent();
+        self::assertStringContainsString('/en/blog/hello', $content);
+        self::assertStringNotContainsString('/en/about', $content);
+    }
+
+    #[Test]
+    public function pages_view_with_search_shows_empty_detail_pane(): void
+    {
+        $client = static::createClient();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $em->persist(PageView::create(
+            fingerprint: str_repeat('a', 64),
+            pageUrl: '/en/blog/hello',
+            referrer: null,
+            viewedAt: new \DateTimeImmutable('today'),
+        ));
+        $em->flush();
+
+        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $client->request('GET', '/analytics/pages?from=' . $today . '&to=' . $today . '&search=blog');
+
+        self::assertResponseStatusCodeSame(200);
+        $content = $client->getResponse()->getContent();
+        self::assertStringContainsString('No page selected', $content);
+        self::assertStringNotContainsString('class="detail-header"', $content);
+    }
 }
