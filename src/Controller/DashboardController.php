@@ -125,7 +125,55 @@ class DashboardController
     #[Route(path: '/events', name: 'cookieless_analytics_dashboard_events_view', methods: ['GET'])]
     public function eventsView(Request $request): Response
     {
-        return new Response('Events page — coming soon');
+        $this->denyAccessUnlessGranted();
+
+        $from = $request->query->get('from');
+        $to = $request->query->get('to');
+        $dateRange = $this->dateRangeResolver->resolve(
+            is_string($from) ? $from : null,
+            is_string($to) ? $to : null,
+        );
+
+        if ($redirect = $this->redirectIfDatesNormalized($request, $dateRange)) {
+            return $redirect;
+        }
+
+        $events = $this->eventRepo->findTopEvents($dateRange->from, $dateRange->to, 50);
+        $totalEvents = $this->eventRepo->countByPeriod($dateRange->from, $dateRange->to);
+        $distinctTypes = $this->eventRepo->countDistinctTypes($dateRange->from, $dateRange->to);
+        $uniqueActors = $this->eventRepo->countUniqueActors($dateRange->from, $dateRange->to);
+        $topEventName = $events[0]['name'] ?? null;
+
+        $selectedDetail = null;
+        if ($topEventName !== null) {
+            $selectedDaily = $this->eventRepo->countByDayForEvent($topEventName, $dateRange->from, $dateRange->to);
+            $selectedValues = $this->eventRepo->findValueBreakdown($topEventName, $dateRange->from, $dateRange->to, 10);
+            $selectedPages = $this->eventRepo->findTopPagesForEvent($topEventName, $dateRange->from, $dateRange->to, 5);
+
+            $selectedDetail = [
+                'name' => $topEventName,
+                'occurrences' => (int) $events[0]['occurrences'],
+                'distinctValues' => (int) $events[0]['distinctValues'],
+                'daily' => $selectedDaily,
+                'values' => $selectedValues,
+                'pages' => $selectedPages,
+            ];
+        }
+
+        $html = $this->twig->render('@CookielessAnalytics/dashboard/events.html.twig', [
+            'from' => $dateRange->from->format('Y-m-d'),
+            'to' => $dateRange->to->format('Y-m-d'),
+            'layout' => $this->dashboardLayout ?? '@CookielessAnalytics/dashboard/layout.html.twig',
+            'active_nav' => 'events',
+            'events' => $events,
+            'totalEvents' => $totalEvents,
+            'distinctTypes' => $distinctTypes,
+            'uniqueActors' => $uniqueActors,
+            'topEventName' => $topEventName,
+            'selectedDetail' => $selectedDetail,
+        ]);
+
+        return new Response($html);
     }
 
     #[Route(path: '/trends', name: 'cookieless_analytics_dashboard_trends_view', methods: ['GET'])]
