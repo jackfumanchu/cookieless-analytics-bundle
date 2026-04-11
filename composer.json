@@ -36,8 +36,8 @@
         "symfony/css-selector": "^7.4 || ^8.0",
         "symfony/panther": "^2.4",
         "symfony/twig-bundle": "^7.4 || ^8.0",
-        "symfony/var-exporter": "^8.0",
-        "symfony/yaml": "^8.0"
+        "symfony/var-exporter": "^7.4 || ^8.0",
+        "symfony/yaml": "^7.4 || ^8.0"
     },
     "config": {
         "allow-plugins": {
