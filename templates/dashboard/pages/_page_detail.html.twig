@@ -1,0 +1,66 @@
+<turbo-frame id="ca-page-detail">
+<div class="detail-pane">
+  {% if selectedDetail %}
+  <div class="detail-header">
+    <div class="detail-url">{{ selectedDetail.pageUrl }}</div>
+  </div>
+
+  {# KPIs #}
+  <div class="detail-kpis">
+    <div class="detail-kpi">
+      <div class="dk-label">Views</div>
+      <div class="dk-value">{{ selectedDetail.views.current|number_format(0, '.', ',') }}</div>
+      {% if selectedDetail.views.changePercent is not null %}
+      <div class="dk-change {{ selectedDetail.views.changePercent >= 0 ? 'up' : 'down' }}">{{ selectedDetail.views.changePercent >= 0 ? '&#9650;' : '&#9660;' }} {{ selectedDetail.views.changePercent|abs }}% vs prev.</div>
+      {% endif %}
+    </div>
+    <div class="detail-kpi">
+      <div class="dk-label">Visitors</div>
+      <div class="dk-value">{{ selectedDetail.visitors.current|number_format(0, '.', ',') }}</div>
+      {% if selectedDetail.visitors.changePercent is not null %}
+      <div class="dk-change {{ selectedDetail.visitors.changePercent >= 0 ? 'up' : 'down' }}">{{ selectedDetail.visitors.changePercent >= 0 ? '&#9650;' : '&#9660;' }} {{ selectedDetail.visitors.changePercent|abs }}% vs prev.</div>
+      {% endif %}
+    </div>
+    <div class="detail-kpi">
+      <div class="dk-label">Avg. Time</div>
+      <div class="dk-value">&mdash;</div>
+    </div>
+    <div class="detail-kpi">
+      <div class="dk-label">Bounce</div>
+      <div class="dk-value">&mdash;</div>
+    </div>
+  </div>
+
+  {# Trend Chart #}
+  <div class="detail-section-label">Daily Trend</div>
+  <div class="detail-chart"
+       data-controller="chart"
+       data-chart-dates-value="{{ selectedDetail.daily|map(d => d.date)|json_encode() }}"
+       data-chart-views-value="{{ selectedDetail.daily|map(d => d.count)|json_encode() }}"
+       data-chart-visitors-value="{{ selectedDetail.daily|map(d => d.unique)|json_encode() }}">
+  </div>
+
+  {# Top Referrers #}
+  <div class="detail-section-label">Top Referrers</div>
+  {% if selectedDetail.referrers|length > 0 %}
+  {% set maxReferrerCount = selectedDetail.referrers|map(r => r.visits)|reduce((carry, v) => max(carry, v), 1) %}
+  <ul class="detail-ref-list">
+    {% for ref in selectedDetail.referrers %}
+    <li class="detail-ref-item">
+      <span class="detail-ref-name">{{ ref.source }}</span>
+      <div class="detail-ref-data">
+        <span class="detail-ref-count">{{ ref.visits }}</span>
+        <div class="detail-ref-bar"><div class="detail-ref-fill" style="width:{{ (ref.visits / maxReferrerCount * 100)|round }}%;"></div></div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="ca-empty" style="min-height: 60px;">No referrer data</div>
+  {% endif %}
+
+  {% else %}
+  <div class="ca-empty">No page selected</div>
+  {% endif %}
+</div>
+</turbo-frame>
