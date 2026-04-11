@@ -51,9 +51,9 @@
   {# ─── Section Nav ─── #}
   <nav class="section-nav">
     <a href="{{ path('cookieless_analytics_dashboard', {from: from, to: to}) }}" {{ active_nav == 'overview' ? 'class="active"' }}>Overview</a>
-    <a href="{{ path('cookieless_analytics_dashboard', {from: from, to: to}) }}" {{ active_nav == 'pages' ? 'class="active"' }}>Pages</a>
-    <a href="{{ path('cookieless_analytics_dashboard', {from: from, to: to}) }}" {{ active_nav == 'events' ? 'class="active"' }}>Events</a>
-    <a href="{{ path('cookieless_analytics_dashboard', {from: from, to: to}) }}" {{ active_nav == 'trends' ? 'class="active"' }}>Trends</a>
+    <a href="{{ path('cookieless_analytics_dashboard_pages_view', {from: from, to: to}) }}" {{ active_nav == 'pages' ? 'class="active"' }}>Pages</a>
+    <a href="{{ path('cookieless_analytics_dashboard_events_view', {from: from, to: to}) }}" {{ active_nav == 'events' ? 'class="active"' }}>Events</a>
+    <a href="{{ path('cookieless_analytics_dashboard_trends_view', {from: from, to: to}) }}" {{ active_nav == 'trends' ? 'class="active"' }}>Trends</a>
   </nav>
 
   {# ─── Date Controls ─── #}

@@ -239,6 +239,43 @@ class DashboardControllerTest extends WebTestCase
     }
 
     #[Test]
+    public function pages_view_returns_200_with_page_list(): void
+    {
+        $client = static::createClient();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $em->persist(PageView::create(
+            fingerprint: str_repeat('a', 64),
+            pageUrl: '/home',
+            referrer: 'https://google.com/search',
+            viewedAt: new \DateTimeImmutable('today'),
+        ));
+        $em->persist(PageView::create(
+            fingerprint: str_repeat('b', 64),
+            pageUrl: '/home',
+            referrer: null,
+            viewedAt: new \DateTimeImmutable('today'),
+        ));
+        $em->persist(PageView::create(
+            fingerprint: str_repeat('a', 64),
+            pageUrl: '/about',
+            referrer: null,
+            viewedAt: new \DateTimeImmutable('today'),
+        ));
+        $em->flush();
+
+        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $client->request('GET', '/analytics/pages?from=' . $today . '&to=' . $today);
+
+        self::assertResponseStatusCodeSame(200);
+        $content = $client->getResponse()->getContent();
+        self::assertStringContainsString('/home', $content);
+        self::assertStringContainsString('/about', $content);
+        self::assertStringContainsString('page-layout', $content);
+        self::assertStringContainsString('google.com', $content);
+    }
+
+    #[Test]
     public function index_does_not_redirect_with_valid_dates(): void
     {
         $client = static::createClient();

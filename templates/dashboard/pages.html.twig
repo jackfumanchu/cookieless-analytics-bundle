@@ -1,0 +1,118 @@
+{% extends layout %}
+
+{% block content %}
+  {# ─── Controls Left ─── #}
+  <div class="controls-left" style="margin-bottom: 20px;">
+    <span class="page-headline">Pages</span>
+    <span class="page-count">{{ totalPages }} page{{ totalPages != 1 ? 's' : '' }} tracked</span>
+  </div>
+
+  {# ─── Search (UI only) ─── #}
+  <div class="search-bar">
+    <svg class="search-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><line x1="10.2" y1="10.2" x2="14" y2="14"/></svg>
+    <input class="search-input" type="text" placeholder="Search pages by URL...">
+    <span class="search-hint">{{ totalPages }} results</span>
+  </div>
+
+  {# ─── Two-Pane Layout ─── #}
+  <div class="page-layout">
+
+    {# ─── List Pane ─── #}
+    <div class="list-pane">
+      {% if pages|length > 0 %}
+      <table class="pages-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Page</th>
+            <th class="num-head">Views</th>
+            <th class="num-head">Visitors</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for page in pages %}
+          <tr{% if selectedDetail and selectedDetail.pageUrl == page.pageUrl %} class="selected"{% endif %}>
+            <td class="rank-col">{{ '%02d'|format(loop.index) }}</td>
+            <td class="url-col">{{ page.pageUrl }}</td>
+            <td class="num-col">{{ page.views|number_format(0, '.', ',') }}</td>
+            <td class="num-col">{{ page.uniqueVisitors|number_format(0, '.', ',') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="ca-empty">No page data for this period</div>
+      {% endif %}
+    </div>
+
+    <div class="pane-divider"></div>
+
+    {# ─── Detail Pane ─── #}
+    <div class="detail-pane">
+      {% if selectedDetail %}
+      <div class="detail-header">
+        <div class="detail-url">{{ selectedDetail.pageUrl }}</div>
+        <div class="detail-subtitle">Selected &middot; Rank #1 this period</div>
+      </div>
+
+      {# KPIs #}
+      <div class="detail-kpis">
+        <div class="detail-kpi">
+          <div class="dk-label">Views</div>
+          <div class="dk-value">{{ selectedDetail.views.current|number_format(0, '.', ',') }}</div>
+          {% if selectedDetail.views.changePercent is not null %}
+          <div class="dk-change {{ selectedDetail.views.changePercent >= 0 ? 'up' : 'down' }}">{{ selectedDetail.views.changePercent >= 0 ? '&#9650;' : '&#9660;' }} {{ selectedDetail.views.changePercent|abs }}% vs prev.</div>
+          {% endif %}
+        </div>
+        <div class="detail-kpi">
+          <div class="dk-label">Visitors</div>
+          <div class="dk-value">{{ selectedDetail.visitors.current|number_format(0, '.', ',') }}</div>
+          {% if selectedDetail.visitors.changePercent is not null %}
+          <div class="dk-change {{ selectedDetail.visitors.changePercent >= 0 ? 'up' : 'down' }}">{{ selectedDetail.visitors.changePercent >= 0 ? '&#9650;' : '&#9660;' }} {{ selectedDetail.visitors.changePercent|abs }}% vs prev.</div>
+          {% endif %}
+        </div>
+        <div class="detail-kpi">
+          <div class="dk-label">Avg. Time</div>
+          <div class="dk-value">&mdash;</div>
+        </div>
+        <div class="detail-kpi">
+          <div class="dk-label">Bounce</div>
+          <div class="dk-value">&mdash;</div>
+        </div>
+      </div>
+
+      {# Trend Chart #}
+      <div class="detail-section-label">Daily Trend</div>
+      <div class="detail-chart"
+           data-controller="chart"
+           data-chart-dates-value="{{ selectedDetail.daily|map(d => d.date)|json_encode() }}"
+           data-chart-views-value="{{ selectedDetail.daily|map(d => d.count)|json_encode() }}"
+           data-chart-visitors-value="{{ selectedDetail.daily|map(d => d.unique)|json_encode() }}">
+      </div>
+
+      {# Top Referrers #}
+      <div class="detail-section-label">Top Referrers</div>
+      {% if selectedDetail.referrers|length > 0 %}
+      {% set maxReferrerCount = selectedDetail.referrers|map(r => r.visits)|reduce((carry, v) => max(carry, v), 1) %}
+      <ul class="detail-ref-list">
+        {% for ref in selectedDetail.referrers %}
+        <li class="detail-ref-item">
+          <span class="detail-ref-name">{{ ref.source }}</span>
+          <div class="detail-ref-data">
+            <span class="detail-ref-count">{{ ref.visits }}</span>
+            <div class="detail-ref-bar"><div class="detail-ref-fill" style="width:{{ (ref.visits / maxReferrerCount * 100)|round }}%;"></div></div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="ca-empty" style="min-height: 60px;">No referrer data</div>
+      {% endif %}
+
+      {% else %}
+      <div class="ca-empty">No page selected</div>
+      {% endif %}
+    </div>
+
+  </div>
+{% endblock %}
