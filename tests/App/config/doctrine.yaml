@@ -7,8 +7,7 @@ doctrine:
         server_version: '18.3'
     orm:
         auto_generate_proxy_classes: true
-        enable_lazy_ghost_objects: true
-        enable_native_lazy_objects: true
+
         auto_mapping: true
         mappings:
             CookielessAnalyticsBundle:

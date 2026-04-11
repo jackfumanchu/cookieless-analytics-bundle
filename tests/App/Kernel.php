@@ -28,6 +28,14 @@ class Kernel extends BaseKernel
         $loader->load(__DIR__ . '/config/framework.yaml');
         $loader->load(__DIR__ . '/config/doctrine.yaml');
         $loader->load(__DIR__ . '/config/cookieless_analytics.yaml');
+
+        if (PHP_VERSION_ID >= 80400) {
+            $loader->load(static function ($container) {
+                $container->loadFromExtension('doctrine', [
+                    'orm' => ['enable_native_lazy_objects' => true],
+                ]);
+            });
+        }
     }
 
     public function getProjectDir(): string
