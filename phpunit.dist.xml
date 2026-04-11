@@ -9,6 +9,7 @@
          failOnWarning="true"
          bootstrap="tests/bootstrap.php"
          cacheDirectory=".phpunit.cache"
+         defaultTestSuite="default"
 >
     <php>
         <ini name="display_errors" value="1" />
@@ -16,6 +17,9 @@
         <server name="APP_ENV" value="test" force="true" />
         <server name="SHELL_VERBOSITY" value="-1" />
         <server name="KERNEL_CLASS" value="Jackfumanchu\CookielessAnalyticsBundle\Tests\App\Kernel" force="true" />
+        <server name="PANTHER_APP_ENV" value="test" force="true" />
+        <env name="PANTHER_WEB_SERVER_PORT" value="9180" />
+        <env name="PANTHER_CHROME_DRIVER_BINARY" value="drivers\chromedriver.exe" />
     </php>
 
     <testsuites>
@@ -23,6 +27,13 @@
             <directory>tests/Unit</directory>
         </testsuite>
         <testsuite name="functional">
+            <directory>tests/Functional</directory>
+        </testsuite>
+        <testsuite name="browser">
+            <directory>tests/Browser</directory>
+        </testsuite>
+        <testsuite name="default">
+            <directory>tests/Unit</directory>
             <directory>tests/Functional</directory>
         </testsuite>
     </testsuites>
