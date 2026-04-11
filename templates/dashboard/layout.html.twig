@@ -218,7 +218,7 @@
 
     // Search Controller
     app.register("search", class extends Controller {
-        static targets = ["input", "hint"];
+        static targets = ["input"];
         static values = { url: String, from: String, to: String };
 
         connect() {
@@ -241,12 +241,6 @@
 
             const frame = document.getElementById("ca-pages-list");
             if (frame) {
-                frame.addEventListener("turbo:frame-load", () => {
-                    const rows = frame.querySelectorAll("tbody tr");
-                    if (this.hasHintTarget) {
-                        this.hintTarget.textContent = rows.length + " result" + (rows.length !== 1 ? "s" : "");
-                    }
-                }, { once: true });
                 frame.src = this.urlValue + "?" + params.toString();
             }
         }
