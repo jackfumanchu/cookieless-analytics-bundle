@@ -403,6 +403,33 @@ class DashboardControllerTest extends WebTestCase
     }
 
     #[Test]
+    public function pages_view_turbo_frame_returns_only_list(): void
+    {
+        $client = static::createClient();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $em->persist(PageView::create(
+            fingerprint: str_repeat('a', 64),
+            pageUrl: '/en/blog/hello',
+            referrer: null,
+            viewedAt: new \DateTimeImmutable('today'),
+        ));
+        $em->flush();
+
+        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $client->request('GET', '/analytics/pages?from=' . $today . '&to=' . $today . '&search=blog', [], [], [
+            'HTTP_TURBO_FRAME' => 'ca-pages-list',
+        ]);
+
+        self::assertResponseStatusCodeSame(200);
+        $content = $client->getResponse()->getContent();
+        self::assertStringContainsString('turbo-frame', $content);
+        self::assertStringContainsString('/en/blog/hello', $content);
+        self::assertStringNotContainsString('detail-pane', $content);
+        self::assertStringNotContainsString('<!DOCTYPE', $content);
+    }
+
+    #[Test]
     public function pages_view_with_search_shows_empty_detail_pane(): void
     {
         $client = static::createClient();

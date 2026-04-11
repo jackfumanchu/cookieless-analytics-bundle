@@ -80,6 +80,16 @@ class DashboardController
         $pages = $this->pageViewRepo->findTopPages($dateRange->from, $dateRange->to, 50, $searchTerm);
         $totalPages = count($pages);
 
+        // Turbo Frame request — return only the list frame
+        if ($request->headers->get('Turbo-Frame') === 'ca-pages-list') {
+            $html = $this->twig->render('@CookielessAnalytics/dashboard/pages/_pages_list.html.twig', [
+                'pages' => $pages,
+                'totalPages' => $totalPages,
+            ]);
+
+            return new Response($html);
+        }
+
         // Pre-select the first page for the detail pane (only when not searching)
         $selectedPage = $searchTerm === null ? ($pages[0]['pageUrl'] ?? null) : null;
         $selectedDetail = null;

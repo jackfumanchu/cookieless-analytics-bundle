@@ -1,0 +1,28 @@
+<turbo-frame id="ca-pages-list">
+<div class="list-pane">
+  {% if pages|length > 0 %}
+  <table class="pages-table">
+    <thead>
+      <tr>
+        <th></th>
+        <th>Page</th>
+        <th class="num-head">Views</th>
+        <th class="num-head">Visitors</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for page in pages %}
+      <tr>
+        <td class="rank-col">{{ '%02d'|format(loop.index) }}</td>
+        <td class="url-col">{{ page.pageUrl }}</td>
+        <td class="num-col">{{ page.views|number_format(0, '.', ',') }}</td>
+        <td class="num-col">{{ page.uniqueVisitors|number_format(0, '.', ',') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="ca-empty">No pages match your search</div>
+  {% endif %}
+</div>
+</turbo-frame>
