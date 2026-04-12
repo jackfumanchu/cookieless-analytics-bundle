@@ -7,6 +7,8 @@ namespace Jackfumanchu\CookielessAnalyticsBundle\Controller;
 use Jackfumanchu\CookielessAnalyticsBundle\Repository\AnalyticsEventRepository;
 use Jackfumanchu\CookielessAnalyticsBundle\Repository\PageViewRepository;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\DateRangeResolver;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\EventDetailBuilder;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\PageDetailBuilder;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\PeriodComparer;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\TrendsStatsCalculator;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\DateRange;
@@ -27,11 +29,12 @@ class DashboardController
         private readonly AnalyticsEventRepository $eventRepo,
         private readonly PeriodComparer $periodComparer,
         private readonly TrendsStatsCalculator $trendsStats,
+        private readonly PageDetailBuilder $pageDetailBuilder,
+        private readonly EventDetailBuilder $eventDetailBuilder,
         private readonly ?AuthorizationCheckerInterface $authorizationChecker,
         private readonly string $dashboardRole,
         private readonly ?string $dashboardLayout,
-    ) {
-    }
+    ) {}
 
     #[Route(path: '/', name: 'cookieless_analytics_dashboard', methods: ['GET'])]
     public function index(Request $request): Response
@@ -118,32 +121,9 @@ class DashboardController
         // Turbo Frame request — return only the detail pane
         if ($request->headers->get('Turbo-Frame') === 'ca-page-detail') {
             $selected = $request->query->get('selected');
-            $selectedDetail = null;
-
-            if (is_string($selected) && $selected !== '') {
-                $viewCount = $this->pageViewRepo->countByPeriodForPage($selected, $dateRange->from, $dateRange->to);
-
-                if ($viewCount > 0) {
-                    $selectedViews = $this->periodComparer->compare(
-                        $dateRange,
-                        fn (\DateTimeImmutable $f, \DateTimeImmutable $t) => $this->pageViewRepo->countByPeriodForPage($selected, $f, $t),
-                    );
-                    $selectedVisitors = $this->periodComparer->compare(
-                        $dateRange,
-                        fn (\DateTimeImmutable $f, \DateTimeImmutable $t) => $this->pageViewRepo->countUniqueVisitorsByPeriodForPage($selected, $f, $t),
-                    );
-                    $selectedDaily = $this->pageViewRepo->countByDayForPage($selected, $dateRange->from, $dateRange->to);
-                    $selectedReferrers = $this->pageViewRepo->findTopReferrersForPage($selected, $dateRange->from, $dateRange->to, 5);
-
-                    $selectedDetail = [
-                        'pageUrl' => $selected,
-                        'views' => $selectedViews,
-                        'visitors' => $selectedVisitors,
-                        'daily' => $selectedDaily,
-                        'referrers' => $selectedReferrers,
-                    ];
-                }
-            }
+            $selectedDetail = is_string($selected) && $selected !== ''
+                ? $this->pageDetailBuilder->build($selected, $dateRange)
+                : null;
 
             $html = $this->twig->render('@CookielessAnalytics/dashboard/pages/_page_detail.html.twig', [
                 'selectedDetail' => $selectedDetail,
@@ -154,27 +134,9 @@ class DashboardController
 
         // Pre-select the first page for the detail pane (only when not searching)
         $selectedPage = $searchTerm === null ? ($pages[0]['pageUrl'] ?? null) : null;
-        $selectedDetail = null;
-        if ($selectedPage !== null) {
-            $selectedViews = $this->periodComparer->compare(
-                $dateRange,
-                fn (\DateTimeImmutable $f, \DateTimeImmutable $t) => $this->pageViewRepo->countByPeriodForPage($selectedPage, $f, $t),
-            );
-            $selectedVisitors = $this->periodComparer->compare(
-                $dateRange,
-                fn (\DateTimeImmutable $f, \DateTimeImmutable $t) => $this->pageViewRepo->countUniqueVisitorsByPeriodForPage($selectedPage, $f, $t),
-            );
-            $selectedDaily = $this->pageViewRepo->countByDayForPage($selectedPage, $dateRange->from, $dateRange->to);
-            $selectedReferrers = $this->pageViewRepo->findTopReferrersForPage($selectedPage, $dateRange->from, $dateRange->to, 5);
-
-            $selectedDetail = [
-                'pageUrl' => $selectedPage,
-                'views' => $selectedViews,
-                'visitors' => $selectedVisitors,
-                'daily' => $selectedDaily,
-                'referrers' => $selectedReferrers,
-            ];
-        }
+        $selectedDetail = $selectedPage !== null
+            ? $this->pageDetailBuilder->build($selectedPage, $dateRange)
+            : null;
 
         $html = $this->twig->render('@CookielessAnalytics/dashboard/pages/pages.html.twig', [
             'from' => $dateRange->from->format('Y-m-d'),
@@ -212,36 +174,14 @@ class DashboardController
             return $redirect;
         }
 
+        $events = $this->eventRepo->findTopEvents($dateRange->from, $dateRange->to, 50);
+
         // Turbo Frame request — return only the detail pane
         if ($request->headers->get('Turbo-Frame') === 'ca-event-detail') {
             $selected = $request->query->get('selected');
-            $selectedDetail = null;
-
-            if (is_string($selected) && $selected !== '') {
-                $events = $this->eventRepo->findTopEvents($dateRange->from, $dateRange->to, 50);
-                $match = null;
-                foreach ($events as $event) {
-                    if ($event['name'] === $selected) {
-                        $match = $event;
-                        break;
-                    }
-                }
-
-                if ($match !== null) {
-                    $selectedDaily = $this->eventRepo->countByDayForEvent($selected, $dateRange->from, $dateRange->to);
-                    $selectedValues = $this->eventRepo->findValueBreakdown($selected, $dateRange->from, $dateRange->to, 10);
-                    $selectedPages = $this->eventRepo->findTopPagesForEvent($selected, $dateRange->from, $dateRange->to, 5);
-
-                    $selectedDetail = [
-                        'name' => $selected,
-                        'occurrences' => (int) $match['occurrences'],
-                        'distinctValues' => (int) $match['distinctValues'],
-                        'daily' => $selectedDaily,
-                        'values' => $selectedValues,
-                        'pages' => $selectedPages,
-                    ];
-                }
-            }
+            $selectedDetail = is_string($selected) && $selected !== ''
+                ? $this->eventDetailBuilder->build($selected, $dateRange, $events)
+                : null;
 
             $html = $this->twig->render('@CookielessAnalytics/dashboard/pages/_event_detail.html.twig', [
                 'selectedDetail' => $selectedDetail,
@@ -250,27 +190,14 @@ class DashboardController
             return new Response($html);
         }
 
-        $events = $this->eventRepo->findTopEvents($dateRange->from, $dateRange->to, 50);
         $totalEvents = $this->eventRepo->countByPeriod($dateRange->from, $dateRange->to);
         $distinctTypes = $this->eventRepo->countDistinctTypes($dateRange->from, $dateRange->to);
         $uniqueActors = $this->eventRepo->countUniqueActors($dateRange->from, $dateRange->to);
         $topEventName = $events[0]['name'] ?? null;
 
-        $selectedDetail = null;
-        if ($topEventName !== null) {
-            $selectedDaily = $this->eventRepo->countByDayForEvent($topEventName, $dateRange->from, $dateRange->to);
-            $selectedValues = $this->eventRepo->findValueBreakdown($topEventName, $dateRange->from, $dateRange->to, 10);
-            $selectedPages = $this->eventRepo->findTopPagesForEvent($topEventName, $dateRange->from, $dateRange->to, 5);
-
-            $selectedDetail = [
-                'name' => $topEventName,
-                'occurrences' => (int) $events[0]['occurrences'],
-                'distinctValues' => (int) $events[0]['distinctValues'],
-                'daily' => $selectedDaily,
-                'values' => $selectedValues,
-                'pages' => $selectedPages,
-            ];
-        }
+        $selectedDetail = $topEventName !== null
+            ? $this->eventDetailBuilder->build($topEventName, $dateRange, $events)
+            : null;
 
         $html = $this->twig->render('@CookielessAnalytics/dashboard/pages/events.html.twig', [
             'from' => $dateRange->from->format('Y-m-d'),

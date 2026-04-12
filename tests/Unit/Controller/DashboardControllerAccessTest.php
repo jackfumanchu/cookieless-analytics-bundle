@@ -8,6 +8,8 @@ use Jackfumanchu\CookielessAnalyticsBundle\Controller\DashboardController;
 use Jackfumanchu\CookielessAnalyticsBundle\Repository\AnalyticsEventRepository;
 use Jackfumanchu\CookielessAnalyticsBundle\Repository\PageViewRepository;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\DateRangeResolver;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\EventDetailBuilder;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\PageDetailBuilder;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\PeriodComparer;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\TrendsStatsCalculator;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -34,6 +36,8 @@ class DashboardControllerAccessTest extends TestCase
             $this->createStub(AnalyticsEventRepository::class),
             $this->createStub(PeriodComparer::class),
             $this->createStub(TrendsStatsCalculator::class),
+            $this->createStub(PageDetailBuilder::class),
+            $this->createStub(EventDetailBuilder::class),
             $authChecker,
             'ROLE_ANALYTICS',
             null,

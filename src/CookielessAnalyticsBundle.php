@@ -13,6 +13,8 @@ use Jackfumanchu\CookielessAnalyticsBundle\Repository\PageViewRepository;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\FingerprintGenerator;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\DateRangeResolver;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\PathExcluder;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\EventDetailBuilder;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\PageDetailBuilder;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\PeriodComparer;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\UrlSanitizer;
 use Jackfumanchu\CookielessAnalyticsBundle\Twig\CookielessAnalyticsExtension;
@@ -89,6 +91,10 @@ class CookielessAnalyticsBundle extends AbstractBundle
         $services->set(PeriodComparer::class);
 
         $services->set(\Jackfumanchu\CookielessAnalyticsBundle\Service\TrendsStatsCalculator::class);
+
+        $services->set(PageDetailBuilder::class);
+
+        $services->set(EventDetailBuilder::class);
 
         $services->set(CollectController::class);
 
