@@ -110,16 +110,19 @@ Fixes #123
 
 ---
 
-## 6. Merge Strategy: Rebase & Merge
+## 6. Merge Strategy
 
-- Preserves granular commit history (TDD progression, focused changes)
-- Each commit remains individually visible — better for `git bisect` and code archaeology
-- Commits should already be clean and focused before opening the PR (no "WIP" or "fix typo" commits)
-- `Fixes #N` goes in the **PR description**, not individual commits — GitHub auto-closes issues from the PR body on merge
+- **CLI:** `git checkout main && git pull && git merge <branch> && git push` — fast-forwards when possible, preserving granular commit history
+- **GitHub UI:** Use "Rebase and merge" button on the PR page, then "Delete branch"
+- Commits should already be clean and focused before merging (no "WIP" or "fix typo" commits)
+- `Fixes #N` in the **PR description** auto-closes issues on merge
+- Delete the feature branch after merge (locally and on remote)
 
-```
-feat(repo): add search filter to findTopPages (#2)
-feat(controller): read search param and skip detail pane (#2)
-feat(template): add Turbo Frame and search data attributes (#2)
-feat(stimulus): add search controller with debounce (#2)
+```bash
+git checkout main
+git pull
+git merge feature/dashboard
+git push
+git branch -d feature/dashboard
+git push origin --delete feature/dashboard
 ```
