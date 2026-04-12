@@ -4,7 +4,7 @@ A lightweight, self-hosted, **cookieless** analytics bundle for Symfony 7.4+.
 
 No cookies. No consent banner. No external service. Full GDPR compliance out of the box.
 
-Tracks page views, unique visitors, and custom events (e.g. booking clicks) using a daily-rotated
+Tracks page views, daily visitors, and custom events (e.g. booking clicks) using a daily-rotated
 anonymous fingerprint — no personal data is ever stored.
 
 ---
@@ -14,7 +14,7 @@ anonymous fingerprint — no personal data is ever stored.
 - ✅ **Cookieless by design** — no consent banner required under GDPR/ePrivacy
 - ✅ **Self-hosted** — all data stays on your own server
 - ✅ **PostgreSQL native** — no extra database engine required
-- ✅ **Unique visitors per page** — via anonymous daily fingerprint (IP + User-Agent, hashed and rotated)
+- ✅ **Daily visitors per page** — via anonymous daily fingerprint (IP + User-Agent, hashed and rotated)
 - ✅ **Navigation path tracking** — sequential page visits per anonymous session
 - ✅ **Custom event tracking** — track any click or interaction with a `data-` attribute
 - ✅ **Standalone dashboard** — built-in analytics UI, no EasyAdmin required
@@ -148,10 +148,10 @@ cookieless_analytics:
 
 | Section | Description |
 |---|---|
-| **Overview** | Total page views and unique visitors for the selected period |
-| **Top pages** | Most visited URLs with unique visitor counts |
+| **Overview** | Total page views and daily visitors for the selected period |
+| **Top pages** | Most visited URLs with daily visitor counts |
 | **Events** | Custom events ranked by count, with distinct value counts |
-| **Trends** | Daily page view and unique visitor chart for the selected period |
+| **Trends** | Daily page view and daily visitor chart for the selected period |
 
 ---
 
@@ -169,6 +169,11 @@ This hash:
 - **changes every day** — a returning visitor cannot be tracked across days
 - **is not reversible** — the original IP address cannot be recovered
 - **is not personal data** under GDPR — no individual can be singled out
+
+Because the fingerprint rotates daily, the "Daily Visitors" metric is deduplicated **within a single
+day only**. Over a multi-day period, the same person visiting on different days is counted once per
+day — not once for the entire period. This is a deliberate privacy tradeoff: it prevents long-term
+tracking at the cost of cross-day deduplication.
 
 This approach is consistent with the CNIL guidelines on cookieless audience measurement
 (délibération n°2020-091).
