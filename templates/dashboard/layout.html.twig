@@ -250,6 +250,19 @@
     app.register("row-select", class extends Controller {
         static values = { url: String, from: String, to: String };
 
+        connect() {
+            // Re-apply highlight after list frame reload (search/pagination)
+            const frame = document.getElementById("ca-page-detail");
+            const selectedUrl = frame ? frame.dataset.selectedUrl : null;
+            if (selectedUrl) {
+                this.element.querySelectorAll("tbody tr").forEach(tr => {
+                    if (tr.dataset.rowSelectPageUrlParam === selectedUrl) {
+                        tr.classList.add("selected");
+                    }
+                });
+            }
+        }
+
         select(event) {
             const row = event.currentTarget;
             const pageUrl = event.params.pageUrl;
@@ -259,10 +272,12 @@
             this.element.querySelectorAll("tbody tr.selected").forEach(tr => tr.classList.remove("selected"));
             row.classList.add("selected");
 
-            // Update detail pane via Turbo Frame
-            const params = new URLSearchParams({ from: this.fromValue, to: this.toValue, selected: pageUrl });
+            // Store selected URL on the detail frame (survives list frame reloads)
             const frame = document.getElementById("ca-page-detail");
             if (frame) {
+                frame.dataset.selectedUrl = pageUrl;
+                // Update detail pane via Turbo Frame
+                const params = new URLSearchParams({ from: this.fromValue, to: this.toValue, selected: pageUrl });
                 frame.src = this.urlValue + "?" + params.toString();
             }
         }
