@@ -629,6 +629,59 @@ class DashboardControllerTest extends WebTestCase
     }
 
     #[Test]
+    public function events_view_turbo_frame_detail_returns_selected_event(): void
+    {
+        $client = static::createClient();
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $em->persist(AnalyticsEvent::create(
+            fingerprint: str_repeat('a', 64),
+            name: 'cta_click',
+            value: 'hero-button',
+            pageUrl: '/home',
+            recordedAt: new \DateTimeImmutable('today'),
+        ));
+        $em->persist(AnalyticsEvent::create(
+            fingerprint: str_repeat('b', 64),
+            name: 'cta_click',
+            value: 'footer-button',
+            pageUrl: '/about',
+            recordedAt: new \DateTimeImmutable('today'),
+        ));
+        $em->flush();
+
+        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $client->request('GET', '/analytics/events?from=' . $today . '&to=' . $today . '&selected=cta_click', [], [], [
+            'HTTP_TURBO_FRAME' => 'ca-event-detail',
+        ]);
+
+        self::assertResponseStatusCodeSame(200);
+        $content = $client->getResponse()->getContent();
+        self::assertStringContainsString('ca-event-detail', $content);
+        self::assertStringContainsString('cta_click', $content);
+        self::assertStringContainsString('dk-value', $content);
+        self::assertStringNotContainsString('events-table', $content);
+        self::assertStringNotContainsString('<!DOCTYPE', $content);
+    }
+
+    #[Test]
+    public function events_view_turbo_frame_detail_with_unknown_event_shows_empty(): void
+    {
+        $client = static::createClient();
+
+        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $client->request('GET', '/analytics/events?from=' . $today . '&to=' . $today . '&selected=nonexistent', [], [], [
+            'HTTP_TURBO_FRAME' => 'ca-event-detail',
+        ]);
+
+        self::assertResponseStatusCodeSame(200);
+        $content = $client->getResponse()->getContent();
+        self::assertStringContainsString('ca-event-detail', $content);
+        self::assertStringContainsString('No event selected', $content);
+        self::assertStringNotContainsString('dk-value', $content);
+    }
+
+    #[Test]
     public function pages_view_search_with_pagination(): void
     {
         $client = static::createClient();

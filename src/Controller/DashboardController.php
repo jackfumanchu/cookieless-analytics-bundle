@@ -212,6 +212,44 @@ class DashboardController
             return $redirect;
         }
 
+        // Turbo Frame request — return only the detail pane
+        if ($request->headers->get('Turbo-Frame') === 'ca-event-detail') {
+            $selected = $request->query->get('selected');
+            $selectedDetail = null;
+
+            if (is_string($selected) && $selected !== '') {
+                $events = $this->eventRepo->findTopEvents($dateRange->from, $dateRange->to, 50);
+                $match = null;
+                foreach ($events as $event) {
+                    if ($event['name'] === $selected) {
+                        $match = $event;
+                        break;
+                    }
+                }
+
+                if ($match !== null) {
+                    $selectedDaily = $this->eventRepo->countByDayForEvent($selected, $dateRange->from, $dateRange->to);
+                    $selectedValues = $this->eventRepo->findValueBreakdown($selected, $dateRange->from, $dateRange->to, 10);
+                    $selectedPages = $this->eventRepo->findTopPagesForEvent($selected, $dateRange->from, $dateRange->to, 5);
+
+                    $selectedDetail = [
+                        'name' => $selected,
+                        'occurrences' => (int) $match['occurrences'],
+                        'distinctValues' => (int) $match['distinctValues'],
+                        'daily' => $selectedDaily,
+                        'values' => $selectedValues,
+                        'pages' => $selectedPages,
+                    ];
+                }
+            }
+
+            $html = $this->twig->render('@CookielessAnalytics/dashboard/pages/_event_detail.html.twig', [
+                'selectedDetail' => $selectedDetail,
+            ]);
+
+            return new Response($html);
+        }
+
         $events = $this->eventRepo->findTopEvents($dateRange->from, $dateRange->to, 50);
         $totalEvents = $this->eventRepo->countByPeriod($dateRange->from, $dateRange->to);
         $distinctTypes = $this->eventRepo->countDistinctTypes($dateRange->from, $dateRange->to);

@@ -37,7 +37,12 @@
     <div class="list-pane">
       {% if events|length > 0 %}
       {% set maxOccurrences = events|map(e => e.occurrences)|reduce((carry, v) => max(carry, v), 1) %}
-      <table class="events-table">
+      <table class="events-table"
+             data-controller="row-select"
+             data-row-select-url-value="{{ path('cookieless_analytics_dashboard_events_view') }}"
+             data-row-select-from-value="{{ from }}"
+             data-row-select-to-value="{{ to }}"
+             data-row-select-frame-value="ca-event-detail">
         <thead>
           <tr>
             <th>Event</th>
@@ -48,7 +53,9 @@
         </thead>
         <tbody>
           {% for event in events %}
-          <tr{% if selectedDetail and selectedDetail.name == event.name %} class="selected"{% endif %}>
+          <tr{% if selectedDetail and selectedDetail.name == event.name %} class="selected"{% endif %}
+              data-action="click->row-select#select"
+              data-row-select-page-url-param="{{ event.name }}">
             <td><span class="ev-name-cell"><span class="ev-bullet"></span>{{ event.name }}</span></td>
             <td class="ev-bar-cell"><div class="ev-bar-track"><div class="ev-bar-fill" style="width:{{ (event.occurrences / maxOccurrences * 100)|round }}%;"></div></div></td>
             <td class="num-col">{{ event.occurrences|number_format(0, '.', ',') }}</td>
@@ -65,72 +72,7 @@
     <div class="pane-divider"></div>
 
     {# ─── Detail Pane ─── #}
-    <div class="detail-pane">
-      {% if selectedDetail %}
-      <div class="detail-header">
-        <div class="detail-event-name">{{ selectedDetail.name }}</div>
-        <div class="detail-subtitle">Selected &middot; Most frequent event</div>
-      </div>
-
-      {# KPIs #}
-      <div class="detail-kpis" style="grid-template-columns: 1fr 1fr;">
-        <div class="detail-kpi">
-          <div class="dk-label">Count</div>
-          <div class="dk-value">{{ selectedDetail.occurrences|number_format(0, '.', ',') }}</div>
-        </div>
-        <div class="detail-kpi">
-          <div class="dk-label">Distinct Values</div>
-          <div class="dk-value">{{ selectedDetail.distinctValues }}</div>
-        </div>
-      </div>
-
-      {# Trend Chart #}
-      <div class="detail-section-label">Period Trend</div>
-      <div class="detail-chart"
-           data-controller="chart"
-           data-chart-dates-value="{{ selectedDetail.daily|map(d => d.date)|json_encode() }}"
-           data-chart-views-value="{{ selectedDetail.daily|map(d => d.count)|json_encode() }}"
-           data-chart-visitors-value="[]">
-      </div>
-
-      {# Values Breakdown #}
-      <div class="detail-section-label">Event Values</div>
-      {% if selectedDetail.values|length > 0 %}
-      {% set maxValueCount = selectedDetail.values|map(v => v.count)|reduce((carry, c) => max(carry, c), 1) %}
-      <ul class="values-list">
-        {% for val in selectedDetail.values %}
-        <li class="value-item">
-          <span class="value-name">{{ val.value }}</span>
-          <div class="value-data">
-            <span class="value-count">{{ val.count }}</span>
-            <div class="value-bar"><div class="value-bar-fill" style="width:{{ (val.count / maxValueCount * 100)|round }}%;"></div></div>
-          </div>
-        </li>
-        {% endfor %}
-      </ul>
-      {% else %}
-      <div class="ca-empty" style="min-height: 60px;">No values recorded</div>
-      {% endif %}
-
-      {# Top Pages #}
-      <div class="detail-section-label">Top Pages</div>
-      {% if selectedDetail.pages|length > 0 %}
-      <ul class="detail-pages-list">
-        {% for page in selectedDetail.pages %}
-        <li class="detail-page-item">
-          <span class="detail-page-url">{{ page.pageUrl }}</span>
-          <span class="detail-page-count">{{ page.count }}</span>
-        </li>
-        {% endfor %}
-      </ul>
-      {% else %}
-      <div class="ca-empty" style="min-height: 60px;">No page data</div>
-      {% endif %}
-
-      {% else %}
-      <div class="ca-empty">No events recorded in this period</div>
-      {% endif %}
-    </div>
+    {% include '@CookielessAnalytics/dashboard/pages/_event_detail.html.twig' %}
 
   </div>
 {% endblock %}

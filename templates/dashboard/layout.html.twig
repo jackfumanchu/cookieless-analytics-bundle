@@ -248,11 +248,11 @@
 
     // Row-Select Controller
     app.register("row-select", class extends Controller {
-        static values = { url: String, from: String, to: String };
+        static values = { url: String, from: String, to: String, frame: String };
 
         connect() {
             // Re-apply highlight after list frame reload (search/pagination)
-            const frame = document.getElementById("ca-page-detail");
+            const frame = this.hasFrameValue ? document.getElementById(this.frameValue) : null;
             const selectedUrl = frame ? frame.dataset.selectedUrl : null;
             if (selectedUrl) {
                 this.element.querySelectorAll("tbody tr").forEach(tr => {
@@ -273,7 +273,7 @@
             row.classList.add("selected");
 
             // Store selected URL on the detail frame (survives list frame reloads)
-            const frame = document.getElementById("ca-page-detail");
+            const frame = this.hasFrameValue ? document.getElementById(this.frameValue) : null;
             if (frame) {
                 frame.dataset.selectedUrl = pageUrl;
                 // Update detail pane via Turbo Frame
