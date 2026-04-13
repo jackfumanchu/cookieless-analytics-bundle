@@ -1,5 +1,10 @@
 # CookielessAnalytics
 
+![CI](https://github.com/jackfumanchu/cookieless-analytics-bundle/actions/workflows/ci.yml/badge.svg)
+![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)
+![MSI](https://img.shields.io/badge/MSI-99%25-brightgreen)
+![PHPStan](https://img.shields.io/badge/PHPStan-level%206-brightgreen)
+
 A lightweight, self-hosted, **cookieless** analytics bundle for Symfony 7.4+.
 
 No cookies. No consent banner. No external service. Full GDPR compliance out of the box.
