@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackfumanchu\CookielessAnalyticsBundle;
 
+use Jackfumanchu\CookielessAnalyticsBundle\Command\InstallCommand;
 use Jackfumanchu\CookielessAnalyticsBundle\Controller\CollectController;
 use Jackfumanchu\CookielessAnalyticsBundle\Controller\DashboardController;
 use Jackfumanchu\CookielessAnalyticsBundle\Controller\DashboardFrameController;
@@ -102,6 +103,8 @@ class CookielessAnalyticsBundle extends AbstractBundle
         $services->set(CollectController::class);
 
         $services->set(EventController::class);
+
+        $services->set(InstallCommand::class);
 
         $services->set(CookielessAnalyticsExtension::class)
             ->arg('$collectUrl', $config['collect_prefix']);
