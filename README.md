@@ -55,7 +55,7 @@ The `cookieless:install` command creates the required database tables. It is saf
 
 ### 1. Enable the bundle
 
-If you are not using Symfony Flex, register the bundle manually:
+Register the bundle in your application:
 
 ```php
 // config/bundles.php
