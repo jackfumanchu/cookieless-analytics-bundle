@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Jackfumanchu\CookielessAnalyticsBundle\Command;
 
+use Doctrine\DBAL\Schema\Schema;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
 use Jackfumanchu\CookielessAnalyticsBundle\Entity\AnalyticsEvent;
@@ -36,18 +37,44 @@ class InstallCommand extends Command
             $this->entityManager->getClassMetadata(AnalyticsEvent::class),
         ];
 
-        $updateSql = $schemaTool->getUpdateSchemaSql($metadata);
+        $toSchema = $schemaTool->getSchemaFromMetadata($metadata);
+        $fromSchema = $this->introspectBundleTables($toSchema);
 
-        if ($updateSql === []) {
+        $comparator = $this->entityManager->getConnection()
+            ->createSchemaManager()
+            ->createComparator();
+
+        $schemaDiff = $comparator->compareSchemas($fromSchema, $toSchema);
+        $sql = $this->entityManager->getConnection()
+            ->getDatabasePlatform()
+            ->getAlterSchemaSQL($schemaDiff);
+
+        if ($sql === []) {
             $io->success('CookielessAnalytics is already installed. Nothing to do.');
 
             return Command::SUCCESS;
         }
 
-        $schemaTool->updateSchema($metadata);
+        foreach ($sql as $statement) {
+            $this->entityManager->getConnection()->executeStatement($statement);
+        }
 
         $io->success('CookielessAnalytics installed successfully.');
 
         return Command::SUCCESS;
+    }
+
+    private function introspectBundleTables(Schema $toSchema): Schema
+    {
+        $schemaManager = $this->entityManager->getConnection()->createSchemaManager();
+        $tables = [];
+
+        foreach ($toSchema->getTables() as $table) {
+            if ($schemaManager->tableExists($table->getName())) {
+                $tables[] = $schemaManager->introspectTable($table->getName());
+            }
+        }
+
+        return new Schema($tables);
     }
 }
