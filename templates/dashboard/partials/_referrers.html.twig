@@ -2,16 +2,14 @@
   <h2 class="section-head">Sources</h2>
   <p class="section-deck">Where your readers are arriving from this period.</p>
   {% if referrers is not empty %}
-  <div>
+  {% set maxVal = referrers|first.visits|default(1) %}
+  <div class="ranked-list">
     {% for ref in referrers %}
-    <div class="ref-item">
-      <span class="ref-source">{{ ref.source }}</span>
-      <span>
-        <span class="ref-num">{{ ref.visits|number_format(0, '.', ',') }}</span>
-        {% if totalVisits > 0 %}
-          <span class="ref-pct">{{ ((ref.visits / totalVisits) * 100)|round(1) }}%</span>
-        {% endif %}
-      </span>
+    <div class="ranked-row">
+      <span class="ranked-rank">{{ '%02d'|format(loop.index) }}</span>
+      <span class="ranked-label">{{ ref.source }}</span>
+      <span class="ranked-count">{{ ref.visits|number_format(0, '.', ',') }}{% if totalVisits > 0 %} <span class="ranked-pct">{{ ((ref.visits / totalVisits) * 100)|round(1) }}%</span>{% endif %}</span>
+      <span class="ranked-bar-track"><span class="ranked-bar-fill" style="width:{{ (ref.visits / maxVal * 100)|round }}%;"></span></span>
     </div>
     {% endfor %}
   </div>

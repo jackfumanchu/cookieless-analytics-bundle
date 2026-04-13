@@ -130,9 +130,39 @@ class PageDetailInteractionTest extends PantherTestCase
         $client->waitFor('.pages-table', 5);
 
         // Page should not show Turbo "Content missing" error
-        $body = $client->getCrawler()->filter('body')->text();
+        // Use executeScript to read from the live DOM (avoids stale element references after Turbo.visit)
+        $body = $client->executeScript('return document.body.textContent');
         self::assertStringNotContainsString('Content missing', $body, 'Page should not show Turbo "Content missing" error after date change');
         // The pages table should still be visible
-        self::assertGreaterThan(0, count($client->getCrawler()->filter('.pages-table')), 'Pages table should be visible after date change');
+        $tableCount = $client->executeScript('return document.querySelectorAll(".pages-table").length');
+        self::assertGreaterThan(0, $tableCount, 'Pages table should be visible after date change');
+    }
+
+    #[Test]
+    public function search_filters_page_list_via_turbo_frame(): void
+    {
+        static::startWebServer(['port' => 9180, 'webServerDir' => __DIR__ . '/../App/public']);
+        $client = PantherClient::createChromeClient(self::chromeDriverBinary(), null, [], 'http://127.0.0.1:9180');
+        $today = (new \DateTimeImmutable('today'))->format('Y-m-d');
+        $from = (new \DateTimeImmutable('today'))->modify('-29 days')->format('Y-m-d');
+
+        $client->request('GET', "/analytics/pages?from={$from}&to={$today}");
+        $client->waitFor('.page-layout', 5);
+
+        // Both pages should be visible initially
+        $rows = $client->getCrawler()->filter('.pages-table tbody tr');
+        self::assertCount(2, $rows, 'Should show 2 pages initially');
+
+        // Type "home" in search — debounce fires after 300ms, reloads the Turbo Frame
+        $searchInput = $client->getCrawler()->filter('.search-input');
+        $searchInput->sendKeys('home');
+        usleep(800_000); // wait for debounce + frame reload
+
+        // Only /home should be visible
+        $rows = $client->getCrawler()->filter('.pages-table tbody tr');
+        self::assertCount(1, $rows, 'Search should filter to 1 result');
+        $rowText = $rows->first()->text();
+        self::assertStringContainsString('/home', $rowText);
+        self::assertStringNotContainsString('/about', $rowText);
     }
 }

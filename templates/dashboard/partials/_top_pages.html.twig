@@ -2,26 +2,17 @@
   <h2 class="section-head">Top Pages</h2>
   <p class="section-deck">Most visited pages this period, ranked by total views.</p>
   {% if pages is not empty %}
-  <table class="ed-table">
-    <thead>
-      <tr>
-        <th></th>
-        <th style="text-align:left;">Page</th>
-        <th>Views</th>
-        <th>Uniq.</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for page in pages %}
-      <tr>
-        <td class="rank-col">{{ '%02d'|format(loop.index) }}</td>
-        <td class="page-col" title="{{ page.pageUrl }}">{{ page.pageUrl }}</td>
-        <td class="num-col">{{ page.views|number_format(0, '.', ',') }}</td>
-        <td class="num-col">{{ page.uniqueVisitors|number_format(0, '.', ',') }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  {% set maxVal = pages|first.views|default(1) %}
+  <div class="ranked-list">
+    {% for page in pages %}
+    <div class="ranked-row">
+      <span class="ranked-rank">{{ '%02d'|format(loop.index) }}</span>
+      <span class="ranked-label" title="{{ page.pageUrl }}">{{ page.pageUrl }}</span>
+      <span class="ranked-count">{{ page.views|number_format(0, '.', ',') }}</span>
+      <span class="ranked-bar-track"><span class="ranked-bar-fill" style="width:{{ (page.views / maxVal * 100)|round }}%;"></span></span>
+    </div>
+    {% endfor %}
+  </div>
   {% else %}
   <p class="ca-empty">No data for this period</p>
   {% endif %}

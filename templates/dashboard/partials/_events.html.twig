@@ -2,16 +2,17 @@
   <h2 class="section-head">Events Dispatch</h2>
   <p class="section-deck">Custom events tracked across the site, ordered by frequency.</p>
   {% if events is not empty %}
-  <ul class="event-list">
-    {% set maxOccurrences = events|first.occurrences|default(1) %}
+  {% set maxVal = events|first.occurrences|default(1) %}
+  <div class="ranked-list">
     {% for event in events %}
-    <li class="event-item">
-      <span class="event-name"><span class="bullet"></span> {{ event.name }}</span>
-      <span class="event-bar-track"><span class="event-bar-fill" style="width:{{ (event.occurrences / maxOccurrences * 100)|round }}%;"></span></span>
-      <span class="event-count">{{ event.occurrences|number_format(0, '.', ',') }}</span>
-    </li>
+    <div class="ranked-row">
+      <span class="ranked-rank">{{ '%02d'|format(loop.index) }}</span>
+      <span class="ranked-label">{{ event.name }}</span>
+      <span class="ranked-count">{{ event.occurrences|number_format(0, '.', ',') }}</span>
+      <span class="ranked-bar-track"><span class="ranked-bar-fill" style="width:{{ (event.occurrences / maxVal * 100)|round }}%;"></span></span>
+    </div>
     {% endfor %}
-  </ul>
+  </div>
   {% else %}
   <p class="ca-empty">No data for this period</p>
   {% endif %}

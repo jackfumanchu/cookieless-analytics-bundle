@@ -64,11 +64,11 @@
       <button class="period-btn" data-date-range-target="shortcut" data-period="7days">7D</button>
       <button class="period-btn" data-date-range-target="shortcut" data-period="30days">30D</button>
       <button class="period-btn" data-date-range-target="shortcut" data-period="month">MTD</button>
-      <span style="width:8px;"></span>
+      <span class="controls-spacer"></span>
       <input class="date-field" type="text" value="{{ from }}" data-date-range-target="fromInput" name="from">
       <span class="date-dash">&mdash;</span>
       <input class="date-field" type="text" value="{{ to }}" data-date-range-target="toInput" name="to">
-      <button class="period-btn" data-action="date-range#apply" style="background:var(--ink);color:var(--paper);border-color:var(--ink);">Apply</button>
+      <button class="period-btn period-btn-primary" data-action="date-range#apply">Apply</button>
     </div>
   </div>
 
@@ -318,7 +318,7 @@
         renderChart() {
             this.element.innerHTML = '';
             if (!this.datesValue.length) {
-                this.element.innerHTML = '<div class="ca-empty" style="display:flex;align-items:center;justify-content:center;height:200px;">No data for this period</div>';
+                this.element.innerHTML = '<div class="ca-empty chart-empty">No data for this period</div>';
                 return;
             }
             const timestamps = this.datesValue.map(d => new Date(d + "T00:00:00").getTime() / 1000);

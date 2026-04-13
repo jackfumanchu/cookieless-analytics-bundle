@@ -4,16 +4,16 @@
   {# ─── Headline Numbers (KPIs) ─── #}
   <turbo-frame id="ca-overview" src="{{ path('cookieless_analytics_dashboard_overview', {from: from, to: to}) }}" loading="lazy">
     <div class="headline-numbers">
-      <div class="headline-num" style="opacity:0.3;"><div class="hn-label">Loading...</div></div>
-      <div class="headline-num" style="opacity:0.3;"><div class="hn-label">Loading...</div></div>
-      <div class="headline-num" style="opacity:0.3;"><div class="hn-label">Loading...</div></div>
-      <div class="headline-num" style="opacity:0.3;"><div class="hn-label">Loading...</div></div>
+      <div class="headline-num loading-placeholder"><div class="hn-label">Loading...</div></div>
+      <div class="headline-num loading-placeholder"><div class="hn-label">Loading...</div></div>
+      <div class="headline-num loading-placeholder"><div class="hn-label">Loading...</div></div>
+      <div class="headline-num loading-placeholder"><div class="hn-label">Loading...</div></div>
     </div>
   </turbo-frame>
 
   {# ─── Chart ─── #}
   <turbo-frame id="ca-trends" src="{{ path('cookieless_analytics_dashboard_trends', {from: from, to: to}) }}" loading="lazy">
-    <div class="chart-area"><div class="chart-box" style="height:200px;opacity:0.3;"></div></div>
+    <div class="chart-area"><div class="chart-box loading-placeholder"></div></div>
   </turbo-frame>
 
   {# ─── Three-Column Section ─── #}

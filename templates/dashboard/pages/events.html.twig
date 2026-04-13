@@ -2,7 +2,7 @@
 
 {% block content %}
   {# ─── Controls Left ─── #}
-  <div class="controls-left" style="margin-bottom: 20px;">
+  <div class="controls-left events-controls">
     <span class="page-headline">Events Dispatch</span>
     <span class="page-count">{{ distinctTypes }} distinct event{{ distinctTypes != 1 ? 's' : '' }}</span>
   </div>
@@ -14,18 +14,14 @@
       <div class="summary-value">{{ totalEvents|number_format(0, '.', ',') }}</div>
     </div>
     <div class="summary-item">
-      <div class="summary-label">Distinct Types</div>
-      <div class="summary-value">{{ distinctTypes }}</div>
-    </div>
-    <div class="summary-item">
       <div class="summary-label">Most Frequent</div>
-      <div class="summary-value" style="font-size:22px; letter-spacing:-0.5px;">{{ topEventName ?? '&mdash;' }}</div>
-      {% if selectedDetail %}
-      <div class="summary-change" style="color:var(--ink-muted);">{{ selectedDetail.occurrences|number_format(0, '.', ',') }} occurrences</div>
+      <div class="summary-value summary-value-text">{{ topEventName ?? '&mdash;' }}</div>
+      {% if topEventOccurrences is defined and topEventOccurrences %}
+      <div class="summary-change summary-change-muted">{{ topEventOccurrences|number_format(0, '.', ',') }} occurrences</div>
       {% endif %}
     </div>
     <div class="summary-item">
-      <div class="summary-label">Unique Actors</div>
+      <div class="summary-label">Daily Actors</div>
       <div class="summary-value">{{ uniqueActors|number_format(0, '.', ',') }}</div>
     </div>
   </div>
@@ -45,10 +41,10 @@
              data-row-select-frame-value="ca-event-detail">
         <thead>
           <tr>
-            <th>Event</th>
             <th></th>
+            <th>Event</th>
             <th class="num-head">Count</th>
-            <th class="num-head">Unique</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -56,10 +52,10 @@
           <tr{% if selectedDetail and selectedDetail.name == event.name %} class="selected"{% endif %}
               data-action="click->row-select#select"
               data-row-select-page-url-param="{{ event.name }}">
-            <td><span class="ev-name-cell"><span class="ev-bullet"></span>{{ event.name }}</span></td>
-            <td class="ev-bar-cell"><div class="ev-bar-track"><div class="ev-bar-fill" style="width:{{ (event.occurrences / maxOccurrences * 100)|round }}%;"></div></div></td>
+            <td class="rank-col">{{ '%02d'|format(loop.index) }}</td>
+            <td class="ev-name-col">{{ event.name }}</td>
             <td class="num-col">{{ event.occurrences|number_format(0, '.', ',') }}</td>
-            <td class="num-col">{{ event.distinctValues }}</td>
+            <td class="bar-col"><span class="ranked-bar-track"><span class="ranked-bar-fill" style="width:{{ (event.occurrences / maxOccurrences * 100)|round }}%;"></span></span></td>
           </tr>
           {% endfor %}
         </tbody>

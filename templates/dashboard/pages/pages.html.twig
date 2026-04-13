@@ -40,10 +40,11 @@
             <th></th>
             <th>Page</th>
             <th class="num-head">Views</th>
-            <th class="num-head">Visitors</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
+          {% set maxViews = pages|map(p => p.views)|reduce((carry, v) => max(carry, v), 1) %}
           {% for page in pages %}
           <tr{% if selectedDetail and selectedDetail.pageUrl == page.pageUrl %} class="selected"{% endif %}
               data-action="click->row-select#select"
@@ -51,7 +52,7 @@
             <td class="rank-col">{{ '%02d'|format(offset + loop.index) }}</td>
             <td class="url-col">{{ page.pageUrl }}</td>
             <td class="num-col">{{ page.views|number_format(0, '.', ',') }}</td>
-            <td class="num-col">{{ page.uniqueVisitors|number_format(0, '.', ',') }}</td>
+            <td class="bar-col"><span class="ranked-bar-track"><span class="ranked-bar-fill" style="width:{{ (page.views / maxViews * 100)|round }}%;"></span></span></td>
           </tr>
           {% endfor %}
         </tbody>

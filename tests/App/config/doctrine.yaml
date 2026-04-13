@@ -1,7 +1,8 @@
 doctrine:
     dbal:
         driver: pdo_pgsql
-        url: 'postgresql://postgres:postgres@localhost/cookieless_analytics_test'
+        #url: 'postgresql://postgres:postgres@localhost/cookieless_analytics_test'
+        url: 'postgresql://catest:c4f3st@localhost/cookieless_analytics_test'
         # TEST_TOKEN is set by ParaTest/Infection for parallel processes
         dbname_suffix: '%env(default::TEST_TOKEN)%'
         server_version: '18.3'

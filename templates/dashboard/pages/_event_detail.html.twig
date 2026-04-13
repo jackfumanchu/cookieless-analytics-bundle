@@ -6,7 +6,7 @@
   </div>
 
   {# KPIs #}
-  <div class="detail-kpis" style="grid-template-columns: 1fr 1fr;">
+  <div class="detail-kpis">
     <div class="detail-kpi">
       <div class="dk-label">Count</div>
       <div class="dk-value">{{ selectedDetail.occurrences|number_format(0, '.', ',') }}</div>
@@ -42,7 +42,7 @@
     {% endfor %}
   </ul>
   {% else %}
-  <div class="ca-empty" style="min-height: 60px;">No values recorded</div>
+  <div class="ca-empty ca-empty-section">No values recorded</div>
   {% endif %}
 
   {# Top Pages #}
@@ -57,7 +57,7 @@
     {% endfor %}
   </ul>
   {% else %}
-  <div class="ca-empty" style="min-height: 60px;">No page data</div>
+  <div class="ca-empty ca-empty-section">No page data</div>
   {% endif %}
 
   {% else %}
