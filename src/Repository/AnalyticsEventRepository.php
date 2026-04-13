@@ -7,13 +7,14 @@ namespace Jackfumanchu\CookielessAnalyticsBundle\Repository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Jackfumanchu\CookielessAnalyticsBundle\Entity\AnalyticsEvent;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\SqlDialect;
 
 /**
  * @extends ServiceEntityRepository<AnalyticsEvent>
  */
 class AnalyticsEventRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry, private readonly SqlDialect $dialect)
     {
         parent::__construct($registry, AnalyticsEvent::class);
     }
@@ -78,16 +79,17 @@ class AnalyticsEventRepository extends ServiceEntityRepository
     public function countByDayForEvent(string $name, \DateTimeImmutable $from, \DateTimeImmutable $to): array
     {
         $conn = $this->getEntityManager()->getConnection();
+        $dateExpr = $this->dialect->dateToDay('recorded_at');
 
-        $sql = <<<'SQL'
+        $sql = "
             SELECT
-                TO_CHAR(recorded_at, 'YYYY-MM-DD') AS date,
+                {$dateExpr} AS date,
                 COUNT(*) AS count
             FROM ca_analytics_event
             WHERE recorded_at >= :from AND recorded_at <= :to AND name = :name
             GROUP BY date
             ORDER BY date ASC
-        SQL;
+        ";
 
         return $conn->executeQuery($sql, [
             'from' => $from->format('Y-m-d H:i:s'),
@@ -143,16 +145,17 @@ class AnalyticsEventRepository extends ServiceEntityRepository
     public function countByDay(\DateTimeImmutable $from, \DateTimeImmutable $to): array
     {
         $conn = $this->getEntityManager()->getConnection();
+        $dateExpr = $this->dialect->dateToDay('recorded_at');
 
-        $sql = <<<'SQL'
+        $sql = "
             SELECT
-                TO_CHAR(recorded_at, 'YYYY-MM-DD') AS date,
+                {$dateExpr} AS date,
                 COUNT(*) AS count
             FROM ca_analytics_event
             WHERE recorded_at >= :from AND recorded_at <= :to
             GROUP BY date
             ORDER BY date ASC
-        SQL;
+        ";
 
         return $conn->executeQuery($sql, [
             'from' => $from->format('Y-m-d H:i:s'),
