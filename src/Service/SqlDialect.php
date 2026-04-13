@@ -34,6 +34,7 @@ final class SqlDialect
             'postgresql' => "TO_CHAR({$column}, 'YYYY-MM-DD')",
             'mysql' => "DATE_FORMAT({$column}, '%Y-%m-%d')",
             'sqlite' => "strftime('%Y-%m-%d', {$column})",
+            default => throw new \LogicException("Unexpected platform: {$this->platform}"),
         };
     }
 
@@ -43,6 +44,7 @@ final class SqlDialect
             'postgresql' => "SUBSTRING({$column} FROM '://([^/]+)')",
             'mysql' => "SUBSTRING_INDEX(SUBSTRING_INDEX({$column}, '://', -1), '/', 1)",
             'sqlite' => "RTRIM(REPLACE(REPLACE({$column}, 'https://', ''), 'http://', ''), '/')",
+            default => throw new \LogicException("Unexpected platform: {$this->platform}"),
         };
     }
 }
