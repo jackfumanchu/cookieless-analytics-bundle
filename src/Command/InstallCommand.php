@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace Jackfumanchu\CookielessAnalyticsBundle\Command;
 
-use Doctrine\DBAL\Schema\Schema;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Tools\SchemaTool;
-use Jackfumanchu\CookielessAnalyticsBundle\Entity\AnalyticsEvent;
-use Jackfumanchu\CookielessAnalyticsBundle\Entity\PageView;
+use Doctrine\DBAL\Connection;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\SqlDialect;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -22,7 +19,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 class InstallCommand extends Command
 {
     public function __construct(
-        private readonly EntityManagerInterface $entityManager,
+        private readonly Connection $connection,
+        private readonly SqlDialect $sqlDialect,
     ) {
         parent::__construct();
     }
@@ -31,50 +29,40 @@ class InstallCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
 
-        $schemaTool = new SchemaTool($this->entityManager);
-        $metadata = [
-            $this->entityManager->getClassMetadata(PageView::class),
-            $this->entityManager->getClassMetadata(AnalyticsEvent::class),
-        ];
+        $idColumn = $this->sqlDialect->autoIncrementId();
+        $datetimeType = $this->sqlDialect->datetimeType();
 
-        $toSchema = $schemaTool->getSchemaFromMetadata($metadata);
-        $fromSchema = $this->introspectBundleTables($toSchema);
+        $this->connection->executeStatement(<<<SQL
+            CREATE TABLE IF NOT EXISTS ca_page_view (
+                {$idColumn},
+                fingerprint VARCHAR(64) NOT NULL,
+                page_url VARCHAR(2048) NOT NULL,
+                referrer VARCHAR(2048) DEFAULT NULL,
+                viewed_at {$datetimeType} NOT NULL
+            )
+            SQL);
 
-        $comparator = $this->entityManager->getConnection()
-            ->createSchemaManager()
-            ->createComparator();
+        $this->connection->executeStatement(<<<SQL
+            CREATE TABLE IF NOT EXISTS ca_analytics_event (
+                {$idColumn},
+                fingerprint VARCHAR(64) NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                value VARCHAR(2048) DEFAULT NULL,
+                page_url VARCHAR(2048) NOT NULL,
+                recorded_at {$datetimeType} NOT NULL
+            )
+            SQL);
 
-        $schemaDiff = $comparator->compareSchemas($fromSchema, $toSchema);
-        $sql = $this->entityManager->getConnection()
-            ->getDatabasePlatform()
-            ->getAlterSchemaSQL($schemaDiff);
+        $this->connection->executeStatement('CREATE INDEX IF NOT EXISTS idx_fingerprint ON ca_page_view (fingerprint)');
+        $this->connection->executeStatement('CREATE INDEX IF NOT EXISTS idx_viewed_at ON ca_page_view (viewed_at)');
+        $this->connection->executeStatement('CREATE INDEX IF NOT EXISTS idx_page_url ON ca_page_view (page_url)');
 
-        if ($sql === []) {
-            $io->success('CookielessAnalytics is already installed. Nothing to do.');
-
-            return Command::SUCCESS;
-        }
-
-        foreach ($sql as $statement) {
-            $this->entityManager->getConnection()->executeStatement($statement);
-        }
+        $this->connection->executeStatement('CREATE INDEX IF NOT EXISTS idx_event_fingerprint ON ca_analytics_event (fingerprint)');
+        $this->connection->executeStatement('CREATE INDEX IF NOT EXISTS idx_event_recorded_at ON ca_analytics_event (recorded_at)');
+        $this->connection->executeStatement('CREATE INDEX IF NOT EXISTS idx_event_name ON ca_analytics_event (name)');
 
         $io->success('CookielessAnalytics installed successfully.');
 
         return Command::SUCCESS;
-    }
-
-    private function introspectBundleTables(Schema $toSchema): Schema
-    {
-        $schemaManager = $this->entityManager->getConnection()->createSchemaManager();
-        $tables = [];
-
-        foreach ($toSchema->getTables() as $table) {
-            if ($schemaManager->tableExists($table->getName())) {
-                $tables[] = $schemaManager->introspectTable($table->getName());
-            }
-        }
-
-        return new Schema($tables);
     }
 }

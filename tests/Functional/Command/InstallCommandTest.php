@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Jackfumanchu\CookielessAnalyticsBundle\Tests\Functional\Command;
 
-use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
@@ -12,52 +12,135 @@ use Symfony\Component\Console\Tester\CommandTester;
 
 class InstallCommandTest extends KernelTestCase
 {
-    #[Test]
-    public function install_creates_tables_on_fresh_database(): void
+    private Connection $connection;
+    private CommandTester $tester;
+
+    protected function setUp(): void
     {
         $kernel = static::bootKernel();
         $application = new Application($kernel);
 
-        // Drop both tables to simulate a fresh database
-        $conn = $kernel->getContainer()->get('test.service_container')
-            ->get(EntityManagerInterface::class)->getConnection();
-        $conn->executeStatement('DROP TABLE IF EXISTS ca_page_view');
-        $conn->executeStatement('DROP TABLE IF EXISTS ca_analytics_event');
+        $connection = self::getContainer()->get(Connection::class);
+        \assert($connection instanceof Connection);
+        $this->connection = $connection;
 
         $command = $application->find('cookieless:install');
-        $tester = new CommandTester($command);
-        $tester->execute([]);
+        $this->tester = new CommandTester($command);
+    }
 
-        self::assertSame(0, $tester->getStatusCode());
-        $output = $tester->getDisplay();
-        self::assertStringContainsString('installed successfully', $output);
-        self::assertStringNotContainsString('Nothing to do', $output);
+    #[Test]
+    public function install_creates_tables_on_fresh_database(): void
+    {
+        $this->dropBundleTables();
+        $this->tester->execute([]);
 
-        // Verify both tables were created by inserting into them
-        $conn->executeStatement("INSERT INTO ca_page_view (fingerprint, page_url, viewed_at) VALUES ('abc', '/test', '2026-01-01 00:00:00')");
-        $conn->executeStatement("INSERT INTO ca_analytics_event (fingerprint, name, page_url, recorded_at) VALUES ('abc', 'test', '/test', '2026-01-01 00:00:00')");
-        $count = $conn->fetchOne('SELECT COUNT(*) FROM ca_page_view');
+        self::assertSame(0, $this->tester->getStatusCode());
+        self::assertStringContainsString('installed successfully', $this->tester->getDisplay());
+
+        $this->connection->executeStatement("INSERT INTO ca_page_view (fingerprint, page_url, viewed_at) VALUES ('abc', '/test', '2026-01-01 00:00:00')");
+        $this->connection->executeStatement("INSERT INTO ca_analytics_event (fingerprint, name, page_url, recorded_at) VALUES ('abc', 'test', '/test', '2026-01-01 00:00:00')");
+        $count = $this->connection->fetchOne('SELECT COUNT(*) FROM ca_page_view');
         self::assertSame(1, (int) $count);
     }
 
     #[Test]
     public function install_is_idempotent(): void
     {
-        $kernel = static::bootKernel();
-        $application = new Application($kernel);
+        $this->tester->execute([]);
+        self::assertSame(0, $this->tester->getStatusCode());
 
-        $command = $application->find('cookieless:install');
+        $this->tester->execute([]);
+        self::assertSame(0, $this->tester->getStatusCode());
+    }
 
-        // First run — tables already exist from bootstrap
-        $tester = new CommandTester($command);
-        $tester->execute([]);
-        self::assertSame(0, $tester->getStatusCode());
+    #[Test]
+    public function install_does_not_drop_unrelated_tables(): void
+    {
+        $this->connection->executeStatement('DROP TABLE IF EXISTS unrelated_table');
+        $this->connection->executeStatement('CREATE TABLE unrelated_table (id INTEGER PRIMARY KEY)');
+        $this->connection->executeStatement("INSERT INTO unrelated_table (id) VALUES (1)");
 
-        // Second run — should report nothing to do, not "installed successfully"
-        $tester->execute([]);
-        self::assertSame(0, $tester->getStatusCode());
-        $output = $tester->getDisplay();
-        self::assertStringContainsString('Nothing to do', $output);
-        self::assertStringNotContainsString('installed successfully', $output);
+        $this->tester->execute([]);
+
+        $count = $this->connection->fetchOne('SELECT COUNT(*) FROM unrelated_table');
+        self::assertSame(1, (int) $count);
+
+        $this->connection->executeStatement('DROP TABLE unrelated_table');
+    }
+
+    #[Test]
+    public function page_view_table_has_expected_columns(): void
+    {
+        $this->tester->execute([]);
+
+        $columns = $this->getColumnNames('ca_page_view');
+
+        self::assertSame(['id', 'fingerprint', 'page_url', 'referrer', 'viewed_at'], $columns);
+    }
+
+    #[Test]
+    public function analytics_event_table_has_expected_columns(): void
+    {
+        $this->tester->execute([]);
+
+        $columns = $this->getColumnNames('ca_analytics_event');
+
+        self::assertSame(['id', 'fingerprint', 'name', 'value', 'page_url', 'recorded_at'], $columns);
+    }
+
+    #[Test]
+    public function page_view_table_has_expected_indexes(): void
+    {
+        $this->dropBundleTables();
+        $this->tester->execute([]);
+
+        $indexNames = $this->getIndexNames('ca_page_view');
+
+        self::assertContains('idx_fingerprint', $indexNames);
+        self::assertContains('idx_viewed_at', $indexNames);
+        self::assertContains('idx_page_url', $indexNames);
+    }
+
+    #[Test]
+    public function analytics_event_table_has_expected_indexes(): void
+    {
+        $this->dropBundleTables();
+        $this->tester->execute([]);
+
+        $indexNames = $this->getIndexNames('ca_analytics_event');
+
+        self::assertContains('idx_event_fingerprint', $indexNames);
+        self::assertContains('idx_event_recorded_at', $indexNames);
+        self::assertContains('idx_event_name', $indexNames);
+    }
+
+    private function dropBundleTables(): void
+    {
+        $this->connection->executeStatement('DROP TABLE IF EXISTS ca_page_view');
+        $this->connection->executeStatement('DROP TABLE IF EXISTS ca_analytics_event');
+    }
+
+    /**
+     * @param non-empty-string $table
+     * @return list<string>
+     */
+    private function getColumnNames(string $table): array
+    {
+        return array_map(
+            static fn ($column) => $column->getObjectName()->getIdentifier()->getValue(),
+            $this->connection->createSchemaManager()->introspectTableColumnsByUnquotedName($table),
+        );
+    }
+
+    /**
+     * @param non-empty-string $table
+     * @return list<string>
+     */
+    private function getIndexNames(string $table): array
+    {
+        return array_map(
+            static fn ($index) => $index->getObjectName()->getIdentifier()->getValue(),
+            $this->connection->createSchemaManager()->introspectTableIndexesByUnquotedName($table),
+        );
     }
 }
