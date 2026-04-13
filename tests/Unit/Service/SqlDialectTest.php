@@ -75,4 +75,18 @@ class SqlDialectTest extends TestCase
             $dialect->extractDomain('referrer'),
         );
     }
+
+    #[Test]
+    public function throws_on_unsupported_platform(): void
+    {
+        $connection = $this->createStub(Connection::class);
+        $connection->method('getDatabasePlatform')->willReturn(
+            $this->createStub(\Doctrine\DBAL\Platforms\OraclePlatform::class)
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Unsupported database platform');
+
+        new SqlDialect($connection);
+    }
 }
