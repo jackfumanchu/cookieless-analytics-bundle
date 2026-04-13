@@ -28,24 +28,24 @@ final class SqlDialect
         };
     }
 
+    /** @infection-ignore-all — constructor guarantees only postgresql/mysql/sqlite; default arm is for PHPStan */
     public function dateToDay(string $column): string
     {
         return match ($this->platform) {
             'postgresql' => "TO_CHAR({$column}, 'YYYY-MM-DD')",
             'mysql' => "DATE_FORMAT({$column}, '%Y-%m-%d')",
             'sqlite' => "strftime('%Y-%m-%d', {$column})",
-            /** @infection-ignore-all — constructor guarantees only postgresql/mysql/sqlite; default is for PHPStan */
             default => throw new \LogicException("Unexpected platform: {$this->platform}"),
         };
     }
 
+    /** @infection-ignore-all — constructor guarantees only postgresql/mysql/sqlite; default arm is for PHPStan */
     public function extractDomain(string $column): string
     {
         return match ($this->platform) {
             'postgresql' => "SUBSTRING({$column} FROM '://([^/]+)')",
             'mysql' => "SUBSTRING_INDEX(SUBSTRING_INDEX({$column}, '://', -1), '/', 1)",
             'sqlite' => "RTRIM(REPLACE(REPLACE({$column}, 'https://', ''), 'http://', ''), '/')",
-            /** @infection-ignore-all — constructor guarantees only postgresql/mysql/sqlite; default is for PHPStan */
             default => throw new \LogicException("Unexpected platform: {$this->platform}"),
         };
     }
