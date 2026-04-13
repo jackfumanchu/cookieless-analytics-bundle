@@ -16,6 +16,7 @@ use Jackfumanchu\CookielessAnalyticsBundle\Service\PathExcluder;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\EventDetailBuilder;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\PageDetailBuilder;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\PeriodComparer;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\SqlDialect;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\UrlSanitizer;
 use Jackfumanchu\CookielessAnalyticsBundle\Twig\CookielessAnalyticsExtension;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
@@ -87,6 +88,8 @@ class CookielessAnalyticsBundle extends AbstractBundle
             ->arg('$patterns', $config['exclude_paths']);
 
         $services->set(DateRangeResolver::class);
+
+        $services->set(SqlDialect::class);
 
         $services->set(PeriodComparer::class);
 
