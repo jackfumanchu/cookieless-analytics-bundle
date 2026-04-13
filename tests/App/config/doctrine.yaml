@@ -8,8 +8,6 @@ doctrine:
         dbname_suffix: '%env(default::TEST_TOKEN)%'
         server_version: '18.3'
     orm:
-        auto_generate_proxy_classes: true
-
         auto_mapping: true
         mappings:
             CookielessAnalyticsBundle:
