@@ -53,6 +53,9 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost/cookieless_analytics_test
 
+      - name: SQLite integration tests
+        run: vendor/bin/phpunit -c phpunit.sqlite.xml --no-coverage
+
       - name: Mutation testing
         if: matrix.php == '8.4'
         run: vendor/bin/infection --threads=4 --no-progress --logger-github --coverage=coverage
