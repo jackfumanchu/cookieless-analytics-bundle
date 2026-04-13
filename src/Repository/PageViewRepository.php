@@ -7,13 +7,14 @@ namespace Jackfumanchu\CookielessAnalyticsBundle\Repository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Jackfumanchu\CookielessAnalyticsBundle\Entity\PageView;
+use Jackfumanchu\CookielessAnalyticsBundle\Service\SqlDialect;
 
 /**
  * @extends ServiceEntityRepository<PageView>
  */
 class PageViewRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry, private readonly SqlDialect $dialect)
     {
         parent::__construct($registry, PageView::class);
     }
@@ -120,17 +121,18 @@ class PageViewRepository extends ServiceEntityRepository
     public function countByDay(\DateTimeImmutable $from, \DateTimeImmutable $to): array
     {
         $conn = $this->getEntityManager()->getConnection();
+        $dateExpr = $this->dialect->dateToDay('viewed_at');
 
-        $sql = <<<'SQL'
+        $sql = "
             SELECT
-                TO_CHAR(viewed_at, 'YYYY-MM-DD') AS date,
+                {$dateExpr} AS date,
                 COUNT(*) AS count,
                 COUNT(DISTINCT fingerprint) AS unique
             FROM ca_page_view
             WHERE viewed_at >= :from AND viewed_at <= :to
             GROUP BY date
             ORDER BY date ASC
-        SQL;
+        ";
 
         return $conn->executeQuery($sql, [
             'from' => $from->format('Y-m-d H:i:s'),
@@ -205,17 +207,18 @@ class PageViewRepository extends ServiceEntityRepository
     public function countByDayForPage(string $pageUrl, \DateTimeImmutable $from, \DateTimeImmutable $to): array
     {
         $conn = $this->getEntityManager()->getConnection();
+        $dateExpr = $this->dialect->dateToDay('viewed_at');
 
-        $sql = <<<'SQL'
+        $sql = "
             SELECT
-                TO_CHAR(viewed_at, 'YYYY-MM-DD') AS date,
+                {$dateExpr} AS date,
                 COUNT(*) AS count,
                 COUNT(DISTINCT fingerprint) AS unique
             FROM ca_page_view
             WHERE viewed_at >= :from AND viewed_at <= :to AND page_url = :pageUrl
             GROUP BY date
             ORDER BY date ASC
-        SQL;
+        ";
 
         return $conn->executeQuery($sql, [
             'from' => $from->format('Y-m-d H:i:s'),
