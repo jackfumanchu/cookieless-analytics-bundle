@@ -4,6 +4,9 @@
 [![codecov](https://codecov.io/github/jackfumanchu/cookieless-analytics-bundle/graph/badge.svg?token=MJY7I3CDH7)](https://codecov.io/github/jackfumanchu/cookieless-analytics-bundle)
 [![Mutation testing badge](https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fjackfumanchu%2Fcookieless-analytics-bundle%2Fmain)](https://dashboard.stryker-mutator.io/reports/github.com/jackfumanchu/cookieless-analytics-bundle/main)
 ![PHPStan](https://img.shields.io/badge/PHPStan-level%206-brightgreen)
+![PHP](https://img.shields.io/badge/PHP-8.2%2B-blue) 
+![Symfony](https://img.shields.io/badge/Symfony-7.4%2B-black)
+
 
 A lightweight, self-hosted, **cookieless** analytics bundle for Symfony 7.4+.
 
