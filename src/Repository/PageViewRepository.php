@@ -146,13 +146,14 @@ class PageViewRepository extends ServiceEntityRepository
     public function findTopReferrers(\DateTimeImmutable $from, \DateTimeImmutable $to, int $limit = 10): array
     {
         $conn = $this->getEntityManager()->getConnection();
+        $domainExpr = $this->dialect->extractDomain('referrer');
 
-        $sql = <<<'SQL'
+        $sql = "
             SELECT source, visits FROM (
                 SELECT
                     CASE
                         WHEN referrer IS NULL OR referrer = '' THEN 'Direct'
-                        ELSE SUBSTRING(referrer FROM '://([^/]+)')
+                        ELSE {$domainExpr}
                     END AS source,
                     COUNT(*) AS visits
                 FROM ca_page_view
@@ -161,7 +162,7 @@ class PageViewRepository extends ServiceEntityRepository
             ) sub
             ORDER BY visits DESC, source = 'Direct' ASC, source ASC
             LIMIT :limit
-        SQL;
+        ";
 
         return $conn->executeQuery($sql, [
             'from' => $from->format('Y-m-d H:i:s'),
@@ -176,13 +177,14 @@ class PageViewRepository extends ServiceEntityRepository
     public function findTopReferrersForPage(string $pageUrl, \DateTimeImmutable $from, \DateTimeImmutable $to, int $limit = 10): array
     {
         $conn = $this->getEntityManager()->getConnection();
+        $domainExpr = $this->dialect->extractDomain('referrer');
 
-        $sql = <<<'SQL'
+        $sql = "
             SELECT source, visits FROM (
                 SELECT
                     CASE
                         WHEN referrer IS NULL OR referrer = '' THEN 'Direct'
-                        ELSE SUBSTRING(referrer FROM '://([^/]+)')
+                        ELSE {$domainExpr}
                     END AS source,
                     COUNT(*) AS visits
                 FROM ca_page_view
@@ -191,7 +193,7 @@ class PageViewRepository extends ServiceEntityRepository
             ) sub
             ORDER BY visits DESC, source = 'Direct' ASC, source ASC
             LIMIT :limit
-        SQL;
+        ";
 
         return $conn->executeQuery($sql, [
             'from' => $from->format('Y-m-d H:i:s'),
