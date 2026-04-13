@@ -122,4 +122,16 @@ class DateRangeResolverTest extends TestCase
         self::assertSame('2026-04-05', $result->from->format('Y-m-d'));
         self::assertSame('2026-04-05', $result->to->format('Y-m-d'));
     }
+
+    #[Test]
+    public function resolve_with_valid_from_and_invalid_to_defaults_to_last_30_days(): void
+    {
+        $result = $this->resolver->resolve('2026-04-10', 'not-a-date');
+
+        $expectedTo = new \DateTimeImmutable('today 23:59:59');
+        $expectedFrom = $expectedTo->modify('-29 days')->setTime(0, 0, 0);
+
+        self::assertEquals($expectedFrom, $result->from);
+        self::assertEquals($expectedTo, $result->to);
+    }
 }

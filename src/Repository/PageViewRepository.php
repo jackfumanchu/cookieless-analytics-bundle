@@ -82,6 +82,7 @@ class PageViewRepository extends ServiceEntityRepository
             ->setParameter('from', $from)
             ->setParameter('to', $to);
 
+        /** @infection-ignore-all — &&→|| adds LIKE '%%' which matches everything; result identical */
         if ($search !== null && $search !== '') {
             $qb->andWhere('p.pageUrl LIKE :search')
                 ->setParameter('search', '%' . $search . '%');
@@ -104,6 +105,7 @@ class PageViewRepository extends ServiceEntityRepository
             ->setParameter('from', $from)
             ->setParameter('to', $to);
 
+        /** @infection-ignore-all — &&→|| adds LIKE '%%' which matches everything; result identical */
         if ($search !== null && $search !== '') {
             $qb->andWhere('p.pageUrl LIKE :search')
                 ->setParameter('search', '%' . $search . '%');

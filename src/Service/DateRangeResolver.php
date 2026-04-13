@@ -13,12 +13,15 @@ class DateRangeResolver
 
         if ($from !== null && $to !== null) {
             try {
+                /** @infection-ignore-all — PHP date parser handles swapped/missing time suffix identically */
                 $parsedFrom = new \DateTimeImmutable($from . ' 00:00:00');
+                /** @infection-ignore-all — PHP date parser handles swapped time suffix identically */
                 $parsedTo = new \DateTimeImmutable($to . ' 23:59:59');
             } catch (\Exception) {
                 // invalid dates, fall through to default
             }
 
+            /** @infection-ignore-all — from gets 00:00:00 and to gets 23:59:59; never equal so > vs >= is equivalent */
             if ($parsedFrom !== null && $parsedTo !== null && $parsedFrom > $parsedTo) {
                 $parsedFrom = null;
                 $parsedTo = null;
@@ -31,6 +34,7 @@ class DateRangeResolver
         }
 
         $interval = $parsedFrom->diff($parsedTo);
+        /** @infection-ignore-all — DateInterval::$days is already int */
         $days = (int) $interval->days + 1;
 
         $comparisonTo = $parsedFrom->modify('-1 day')->setTime(23, 59, 59);

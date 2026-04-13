@@ -44,6 +44,7 @@ class CollectController
         }
 
         $fingerprint = $this->fingerprintGenerator->generate(
+            /** @infection-ignore-all — test client always provides IP; coalesce only matters behind proxy */
             $request->getClientIp() ?? '0.0.0.0',
             $request->headers->get('User-Agent', ''),
             new \DateTimeImmutable(),

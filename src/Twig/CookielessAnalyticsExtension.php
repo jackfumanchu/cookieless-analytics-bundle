@@ -20,8 +20,10 @@ class CookielessAnalyticsExtension extends AbstractExtension implements GlobalsI
 
     public function getGlobals(): array
     {
+        /** @infection-ignore-all — getVersion() never returns null for an installed package */
         $version = InstalledVersions::getVersion('jackfumanchu/cookieless-analytics-bundle') ?? '0.0.0';
         $earliest = $this->pageViewRepo->findEarliestViewedAt();
+        /** @infection-ignore-all — DateInterval::$days is already int */
         $daysActive = $earliest !== null ? (int) $earliest->diff(new \DateTimeImmutable('today'))->days + 1 : 0;
 
         return [

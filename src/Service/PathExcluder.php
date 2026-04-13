@@ -16,6 +16,7 @@ class PathExcluder
 
     public function isExcluded(string $url): bool
     {
+        /** @infection-ignore-all — early return is an optimization; foreach on [] reaches the same return false */
         if ($this->patterns === []) {
             return false;
         }

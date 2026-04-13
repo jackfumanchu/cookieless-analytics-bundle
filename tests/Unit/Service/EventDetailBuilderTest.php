@@ -37,6 +37,28 @@ class EventDetailBuilderTest extends TestCase
     }
 
     #[Test]
+    public function uses_first_matching_event_from_list(): void
+    {
+        $eventRepo = $this->createConfiguredStub(AnalyticsEventRepository::class, [
+            'countByDayForEvent' => [],
+            'findValueBreakdown' => [],
+            'findTopPagesForEvent' => [],
+        ]);
+
+        $builder = new EventDetailBuilder($eventRepo);
+        // Two entries with same name but different occurrences — break ensures first match wins
+        $events = [
+            ['name' => 'click', 'occurrences' => 10, 'distinctValues' => 3],
+            ['name' => 'click', 'occurrences' => 99, 'distinctValues' => 1],
+        ];
+
+        $result = $builder->build('click', $this->dateRange, $events);
+
+        self::assertSame(10, $result->occurrences);
+        self::assertSame(3, $result->distinctValues);
+    }
+
+    #[Test]
     public function returns_event_detail_with_all_data(): void
     {
         $eventRepo = $this->createConfiguredStub(AnalyticsEventRepository::class, [

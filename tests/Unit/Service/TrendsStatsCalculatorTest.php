@@ -127,14 +127,14 @@ class TrendsStatsCalculatorTest extends TestCase
         self::assertSame(1, $stats['dailyAvgViews']);
         // visitors: 4/3 = 1.333 → round=1 (ceil=2)
         self::assertSame(1, $stats['dailyAvgVisitors']);
+        // weekday: 4/3 = 1.333 → round=1 (ceil=2) — kills weekdayAvg round→ceil mutant
+        self::assertSame(1, $stats['weekdayAvg']);
     }
 
     #[Test]
-    public function compute_weekend_avg_uses_round(): void
+    public function compute_weekend_avg_uses_round_not_ceil(): void
     {
-        // 2 weekend days with total 5 → 2.5 → round=3, ceil=3, floor=2
-        // Need: 3 weekend days with total 5 → 1.667 → round=2, ceil=2, floor=1
-        // And: 3 weekend days with total 4 → 1.333 → round=1, ceil=2, floor=1
+        // 3 weekend days with total 4 → 1.333 → round=1, ceil=2, floor=1
         $daily = [
             ['date' => '2026-04-04', 'count' => '1', 'unique' => '1'],  // Saturday
             ['date' => '2026-04-05', 'count' => '1', 'unique' => '1'],  // Sunday
@@ -145,5 +145,21 @@ class TrendsStatsCalculatorTest extends TestCase
 
         // weekend: 4/3 = 1.333 → round=1 (ceil=2)
         self::assertSame(1, $stats['weekendAvg']);
+    }
+
+    #[Test]
+    public function compute_weekend_avg_uses_round_not_floor(): void
+    {
+        // 3 weekend days with total 5 → 1.667 → round=2, floor=1
+        $daily = [
+            ['date' => '2026-04-04', 'count' => '2', 'unique' => '1'],  // Saturday
+            ['date' => '2026-04-05', 'count' => '2', 'unique' => '1'],  // Sunday
+            ['date' => '2026-04-11', 'count' => '1', 'unique' => '1'],  // Saturday
+        ];
+
+        $stats = $this->calculator->compute($daily);
+
+        // weekend: 5/3 = 1.667 → round=2 (floor=1)
+        self::assertSame(2, $stats['weekendAvg']);
     }
 }

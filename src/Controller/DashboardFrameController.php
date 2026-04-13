@@ -76,7 +76,9 @@ class DashboardFrameController
         $daily = $this->pageViewRepo->countByDay($dateRange->from, $dateRange->to);
 
         $dates = array_map(fn (array $row) => $row['date'], $daily);
+        /** @infection-ignore-all — json_encode("1") and json_encode(1) both produce 1; cast invisible through JSON */
         $views = array_map(fn (array $row) => (int) $row['count'], $daily);
+        /** @infection-ignore-all — json_encode("1") and json_encode(1) both produce 1; cast invisible through JSON */
         $visitors = array_map(fn (array $row) => (int) $row['unique'], $daily);
 
         $html = $this->twig->render('@CookielessAnalytics/dashboard/partials/_trends.html.twig', [

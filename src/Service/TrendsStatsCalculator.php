@@ -32,12 +32,14 @@ class TrendsStatsCalculator
         foreach ($daily as $row) {
             $date = $row['date'];
             $count = (int) $row['count'];
+            /** @infection-ignore-all — array_sum handles string values identically to ints */
             $unique = (int) $row['unique'];
 
             $dates[] = $date;
             $views[] = $count;
             $visitors[] = $unique;
 
+            /** @infection-ignore-all — format('N') returns '1'..'7'; PHP loose comparison with <= 5 works on strings */
             $dow = (int) (new \DateTimeImmutable($date))->format('N');
             if ($dow <= 5) {
                 $weekdayViews[] = $count;

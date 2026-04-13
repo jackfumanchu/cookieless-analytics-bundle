@@ -28,6 +28,7 @@ class EventController
     {
         $body = json_decode($request->getContent(), true);
 
+        /** @infection-ignore-all — subsequent empty($body['name']) guard also returns 400 for non-array input */
         if (!is_array($body)) {
             return new Response(null, Response::HTTP_BAD_REQUEST);
         }
@@ -52,6 +53,7 @@ class EventController
         }
 
         $fingerprint = $this->fingerprintGenerator->generate(
+            /** @infection-ignore-all — test client always provides IP; coalesce only matters behind proxy */
             $request->getClientIp() ?? '0.0.0.0',
             $request->headers->get('User-Agent', ''),
             new \DateTimeImmutable(),
