@@ -36,7 +36,7 @@ class InstallCommand extends Command
             $this->entityManager->getClassMetadata(AnalyticsEvent::class),
         ];
 
-        $updateSql = $schemaTool->getUpdateSchemaSql($metadata);
+        $updateSql = $schemaTool->getUpdateSchemaSql($metadata, true);
 
         if ($updateSql === []) {
             $io->success('CookielessAnalytics is already installed. Nothing to do.');
@@ -44,7 +44,7 @@ class InstallCommand extends Command
             return Command::SUCCESS;
         }
 
-        $schemaTool->updateSchema($metadata);
+        $schemaTool->updateSchema($metadata, true);
 
         $io->success('CookielessAnalytics installed successfully.');
 
