@@ -23,7 +23,7 @@ anonymous fingerprint — no personal data is ever stored.
 - ✅ **Self-hosted** — all data stays on your own server
 - ✅ **Multi-database** — supports PostgreSQL, MySQL, and SQLite
 - ✅ **Daily visitors per page** — via anonymous daily fingerprint (IP + User-Agent, hashed and rotated)
-- ✅ **Navigation path tracking** — sequential page visits per anonymous session
+- ✅ **Referrer tracking** — see where your visitors come from, with domain extraction
 - ✅ **Custom event tracking** — track any click or interaction with a `data-` attribute
 - ✅ **Standalone dashboard** — built-in analytics UI, no EasyAdmin required
 - ✅ **Multi-site ready** — one bundle installation per Symfony app
@@ -120,8 +120,6 @@ cookieless_analytics:
     # Role required to access the dashboard
     dashboard_role: 'ROLE_ANALYTICS'
 
-    # Number of days to retain raw page view records (0 = keep forever)
-    retention_days: 365
 ```
 
 ---
@@ -138,7 +136,7 @@ Access is restricted to users with the configured role (default: `ROLE_ANALYTICS
 
 ### Dashboard setup
 
-For interactive features (date range selector, lazy-loading widgets, charts), install the optional dependencies:
+The dashboard requires Symfony UX Turbo for interactive features (lazy-loading widgets, live search, detail pane navigation). Data collection works without it.
 
 ```bash
 composer require symfony/ux-turbo
@@ -219,7 +217,7 @@ This bundle is designed to operate **without a cookie consent banner** under the
 - [ ] Bot and crawler filtering
 - [ ] UTM campaign parameter tracking
 - [ ] Weekly summary email report
-- [ ] Symfony UX Turbo compatibility
+- [ ] Dashboard without Turbo (static fallback)
 
 ---
 
