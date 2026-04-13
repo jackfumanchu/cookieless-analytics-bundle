@@ -49,7 +49,7 @@ jobs:
 
       - run: composer update --no-progress
 
-      - run: vendor/bin/phpunit --testsuite default --coverage-xml=coverage/coverage-xml --log-junit=coverage/junit.xml
+      - run: vendor/bin/phpunit --testsuite default --coverage-xml=coverage/coverage-xml --log-junit=coverage/junit.xml --coverage-clover=coverage/clover.xml
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost/cookieless_analytics_test
 
@@ -59,6 +59,13 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost/cookieless_analytics_test
           STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
+          
+      - name: Upload coverage to Codecov
+        if: matrix.php == '8.4'
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage/clover.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   quality:
     name: Code quality
