@@ -38,10 +38,29 @@ class Kernel extends BaseKernel
                 ->setPublic(true)
                 ->addTag('controller.service_arguments');
 
+            $dbalConfig = [];
+            $ormConfig = [];
+
+            // TEST_TOKEN is set by ParaTest/Infection for parallel processes.
+            // dbname_suffix with env(default::) is incompatible with Symfony 6.4's config validation,
+            // so we only set it when the env var is actually present.
+            if (isset($_SERVER['TEST_TOKEN'])) {
+                $dbalConfig['dbname_suffix'] = '_' . $_SERVER['TEST_TOKEN'];
+            }
+
             if (PHP_VERSION_ID >= 80400 && InstalledVersions::satisfies(new \Composer\Semver\VersionParser(), 'doctrine/doctrine-bundle', '>=3.1')) {
-                $container->loadFromExtension('doctrine', [
-                    'orm' => ['enable_native_lazy_objects' => true],
-                ]);
+                $ormConfig['enable_native_lazy_objects'] = true;
+            }
+
+            if ($dbalConfig || $ormConfig) {
+                $doctrine = [];
+                if ($dbalConfig) {
+                    $doctrine['dbal'] = $dbalConfig;
+                }
+                if ($ormConfig) {
+                    $doctrine['orm'] = $ormConfig;
+                }
+                $container->loadFromExtension('doctrine', $doctrine);
             }
         });
     }
