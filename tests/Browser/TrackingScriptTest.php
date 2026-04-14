@@ -74,7 +74,7 @@ class TrackingScriptTest extends PantherTestCase
     }
 
     #[Test]
-    public function push_state_navigation_persists_with_correct_referrer(): void
+    public function push_state_navigation_sends_beacon_with_internal_referrer(): void
     {
         $em = $this->getEntityManager();
         $this->clearPageViews($em);
@@ -92,11 +92,10 @@ class TrackingScriptTest extends PantherTestCase
         usleep(500_000);
 
         $views = $this->getPageViews($em);
-        self::assertCount(2, $views, 'Two page views should be persisted');
-
+        self::assertCount(2, $views, 'Two beacons should be sent');
         self::assertSame('/test/home', $views[0]['pageUrl']);
         self::assertSame('/test/about', $views[1]['pageUrl']);
-        self::assertSame('/test/home', $views[1]['referrer'], 'SPA navigation referrer should be the previous page URL');
+        self::assertSame('/test/home', $views[1]['referrer'], 'SPA navigation should send previous page URL as referrer');
     }
 
     #[Test]
@@ -176,13 +175,9 @@ class TrackingScriptTest extends PantherTestCase
 
         $views = $this->getPageViews($em);
         self::assertCount(3, $views, 'Each distinct SPA navigation should send exactly one beacon');
-
-        // Verify URLs
         self::assertSame('/test/home', $views[0]['pageUrl']);
         self::assertSame('/test/about', $views[1]['pageUrl']);
         self::assertSame('/test/contact', $views[2]['pageUrl']);
-
-        // Verify JS passes the previous URL as referrer
         self::assertSame('/test/home', $views[1]['referrer']);
         self::assertSame('/test/about', $views[2]['referrer']);
     }

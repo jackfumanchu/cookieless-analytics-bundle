@@ -117,6 +117,16 @@ class CookielessAnalyticsExtensionTest extends TestCase
     }
 
     #[Test]
+    public function render_script_guards_against_re_initialization(): void
+    {
+        $extension = $this->createExtension();
+
+        $script = $extension->renderScript();
+
+        self::assertStringContainsString('window.__ca', $script);
+    }
+
+    #[Test]
     public function get_globals_returns_days_active_from_earliest_view(): void
     {
         $repo = $this->createStub(PageViewRepository::class);

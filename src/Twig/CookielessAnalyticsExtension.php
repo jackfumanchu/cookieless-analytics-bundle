@@ -48,7 +48,8 @@ class CookielessAnalyticsExtension extends AbstractExtension implements GlobalsI
         return <<<HTML
         <script>
         (function(){
-            if(typeof navigator.sendBeacon!=='function')return;
+            if(typeof navigator.sendBeacon!=='function'||window.__ca)return;
+            window.__ca=1;
             var b=function(u,d){navigator.sendBeacon(u,new Blob([d],{type:'application/json'}));};
             var ce='{$collectEndpoint}',last='';
             var t=function(){

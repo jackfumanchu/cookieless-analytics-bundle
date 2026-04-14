@@ -158,6 +158,7 @@ class PageViewRepository extends ServiceEntityRepository
                     COUNT(*) AS visits
                 FROM ca_page_view
                 WHERE viewed_at >= :from AND viewed_at <= :to
+                    AND (referrer IS NULL OR referrer = '' OR referrer LIKE 'http%')
                 GROUP BY source
             ) sub
             ORDER BY visits DESC, source = 'Direct' ASC, source ASC
@@ -189,6 +190,7 @@ class PageViewRepository extends ServiceEntityRepository
                     COUNT(*) AS visits
                 FROM ca_page_view
                 WHERE viewed_at >= :from AND viewed_at <= :to AND page_url = :pageUrl
+                    AND (referrer IS NULL OR referrer = '' OR referrer LIKE 'http%')
                 GROUP BY source
             ) sub
             ORDER BY visits DESC, source = 'Direct' ASC, source ASC

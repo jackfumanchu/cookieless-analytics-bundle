@@ -116,6 +116,84 @@ class PageViewRepositoryTest extends KernelTestCase
     }
 
     #[Test]
+    public function find_top_referrers_excludes_internal_referrers(): void
+    {
+        $today = new \DateTimeImmutable('today');
+
+        $this->em->persist(PageView::create(
+            fingerprint: str_repeat('a', 64),
+            pageUrl: '/about',
+            referrer: '/home',
+            viewedAt: $today,
+        ));
+        $this->em->persist(PageView::create(
+            fingerprint: str_repeat('a', 64),
+            pageUrl: '/contact',
+            referrer: '/about',
+            viewedAt: $today,
+        ));
+        $this->em->persist(PageView::create(
+            fingerprint: str_repeat('b', 64),
+            pageUrl: '/home',
+            referrer: 'https://google.com/search',
+            viewedAt: $today,
+        ));
+        $this->em->persist(PageView::create(
+            fingerprint: str_repeat('c', 64),
+            pageUrl: '/home',
+            referrer: null,
+            viewedAt: $today,
+        ));
+        $this->em->flush();
+
+        $result = $this->repo->findTopReferrers($today, $today->setTime(23, 59, 59));
+
+        $sources = array_column($result, 'source');
+        self::assertNotContains('/home', $sources, 'Internal paths should not appear as sources');
+        self::assertNotContains('/about', $sources, 'Internal paths should not appear as sources');
+        self::assertContains('Direct', $sources);
+        self::assertCount(2, $result, 'Only Direct and google.com should appear');
+
+        $directRow = array_values(array_filter($result, fn ($r) => $r['source'] === 'Direct'));
+        self::assertSame(1, (int) $directRow[0]['visits'], 'Direct should only count null/empty referrers');
+    }
+
+    #[Test]
+    public function find_top_referrers_for_page_excludes_internal_referrers(): void
+    {
+        $today = new \DateTimeImmutable('today');
+
+        $this->em->persist(PageView::create(
+            fingerprint: str_repeat('a', 64),
+            pageUrl: '/about',
+            referrer: '/home',
+            viewedAt: $today,
+        ));
+        $this->em->persist(PageView::create(
+            fingerprint: str_repeat('b', 64),
+            pageUrl: '/about',
+            referrer: 'https://twitter.com/link',
+            viewedAt: $today,
+        ));
+        $this->em->persist(PageView::create(
+            fingerprint: str_repeat('c', 64),
+            pageUrl: '/about',
+            referrer: null,
+            viewedAt: $today,
+        ));
+        $this->em->flush();
+
+        $result = $this->repo->findTopReferrersForPage('/about', $today, $today->setTime(23, 59, 59));
+
+        $sources = array_column($result, 'source');
+        self::assertNotContains('/home', $sources, 'Internal paths should not appear as sources');
+        self::assertCount(2, $result, 'Only Direct and twitter.com should appear');
+
+        $directRow = array_values(array_filter($result, fn ($r) => $r['source'] === 'Direct'));
+        self::assertSame(1, (int) $directRow[0]['visits'], 'Direct should only count null/empty referrers');
+    }
+
+    #[Test]
     public function find_top_referrers_for_page_default_limit_is_10(): void
     {
         $today = new \DateTimeImmutable('today');
