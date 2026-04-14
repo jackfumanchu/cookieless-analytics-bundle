@@ -19,10 +19,12 @@ use Jackfumanchu\CookielessAnalyticsBundle\Service\PageDetailBuilder;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\PeriodComparer;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\SqlDialect;
 use Jackfumanchu\CookielessAnalyticsBundle\Service\UrlSanitizer;
+use Jackfumanchu\CookielessAnalyticsBundle\Routing\RouteLoader;
 use Jackfumanchu\CookielessAnalyticsBundle\Twig\CookielessAnalyticsExtension;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 class CookielessAnalyticsBundle extends AbstractBundle
@@ -105,6 +107,12 @@ class CookielessAnalyticsBundle extends AbstractBundle
         $services->set(EventController::class);
 
         $services->set(InstallCommand::class);
+
+        $services->set(RouteLoader::class)
+            ->arg('$loader', service('routing.loader.attribute'))
+            ->arg('$collectPrefix', $config['collect_prefix'])
+            ->arg('$dashboardPrefix', $config['dashboard_prefix'])
+            ->arg('$dashboardEnabled', $config['dashboard_enabled']);
 
         $services->set(CookielessAnalyticsExtension::class)
             ->arg('$collectUrl', $config['collect_prefix']);
