@@ -34,7 +34,7 @@ anonymous fingerprint — no personal data is ever stored.
 ## Requirements
 
 - PHP 8.2+
-- Symfony 7.4 or 8.x
+- Symfony 6.4, 7.4 or 8.x
 - Doctrine ORM 3.x
 - PostgreSQL 12+, MySQL 5.7+ / MariaDB 10.3+, or SQLite 3
 
