@@ -188,10 +188,19 @@ class InstallCommandTest extends KernelTestCase
      */
     private function getColumnNames(string $table): array
     {
-        return array_map(
-            static fn ($column) => $column->getObjectName()->getIdentifier()->getValue(),
-            $this->connection->createSchemaManager()->introspectTableColumnsByUnquotedName($table),
-        );
+        $sm = $this->connection->createSchemaManager();
+
+        if (method_exists($sm, 'introspectTableColumnsByUnquotedName')) {
+            return array_map(
+                static fn ($column) => $column->getObjectName()->getIdentifier()->getValue(),
+                $sm->introspectTableColumnsByUnquotedName($table),
+            );
+        }
+
+        return array_values(array_map(
+            static fn ($column) => $column->getName(),
+            $sm->listTableColumns($table),
+        ));
     }
 
     /**
@@ -200,9 +209,18 @@ class InstallCommandTest extends KernelTestCase
      */
     private function getIndexNames(string $table): array
     {
-        return array_map(
-            static fn ($index) => $index->getObjectName()->getIdentifier()->getValue(),
-            $this->connection->createSchemaManager()->introspectTableIndexesByUnquotedName($table),
-        );
+        $sm = $this->connection->createSchemaManager();
+
+        if (method_exists($sm, 'introspectTableIndexesByUnquotedName')) {
+            return array_map(
+                static fn ($index) => $index->getObjectName()->getIdentifier()->getValue(),
+                $sm->introspectTableIndexesByUnquotedName($table),
+            );
+        }
+
+        return array_values(array_map(
+            static fn ($index) => $index->getName(),
+            $sm->listTableIndexes($table),
+        ));
     }
 }
