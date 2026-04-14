@@ -190,7 +190,7 @@ class InstallCommandTest extends KernelTestCase
     {
         $sm = $this->connection->createSchemaManager();
 
-        if (method_exists($sm, 'introspectTableColumnsByUnquotedName')) {
+        if (method_exists($sm, 'introspectTableColumnsByUnquotedName')) { // @phpstan-ignore function.alreadyNarrowedType
             return array_map(
                 static fn ($column) => $column->getObjectName()->getIdentifier()->getValue(),
                 $sm->introspectTableColumnsByUnquotedName($table),
@@ -211,7 +211,7 @@ class InstallCommandTest extends KernelTestCase
     {
         $sm = $this->connection->createSchemaManager();
 
-        if (method_exists($sm, 'introspectTableIndexesByUnquotedName')) {
+        if (method_exists($sm, 'introspectTableIndexesByUnquotedName')) { // @phpstan-ignore function.alreadyNarrowedType
             return array_map(
                 static fn ($index) => $index->getObjectName()->getIdentifier()->getValue(),
                 $sm->introspectTableIndexesByUnquotedName($table),
